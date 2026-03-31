@@ -1,0 +1,23 @@
+# Node modules (Heavy dependencies)
+node_modules/
+frontend/node_modules/
+node-backend/node_modules/
+
+# Environment Variables (Sensitive Data & Database URIs)
+.env
+node-backend/.env
+frontend/.env
+
+# Local Uploads (User Feedback Images/Videos)
+uploads/
+node-backend/uploads/
+
+# Build outputs
+dist/
+frontend/dist/
+build/
+.DS_Store
+
+# IDE and Editor files
+.vscode/
+.idea/

@@ -14,6 +14,16 @@ const props = [
   { Icon: Book, x: 4, y: 90, size: 40, tilt: -19, speed: 0.18, gold: true },
 ];
 
+export function CampusProp({ Icon, x, y, size, tilt, speed, gold, phase = 0 }) {
+  return (
+    <span className={gold ? 'campus-prop campus-prop-gold' : 'campus-prop'}
+      style={{ '--x': x + '%', '--y': y + '%', '--size': size + 'px', '--tilt': tilt + 'deg',
+        '--speed': speed, '--phase': phase + 's' }}>
+      <Icon strokeWidth={1.45} />
+    </span>
+  );
+}
+
 export default function CampusProps({ children }) {
   const frame = useRef(null);
   const { pathname } = useLocation();
@@ -24,8 +34,6 @@ export default function CampusProps({ children }) {
     let pending = 0;
     const paint = () => {
       pending = 0;
-      const distance = Math.min(window.scrollY, window.innerHeight * 1.25);
-      element.style.setProperty('--campus-scroll', motion.matches ? '0px' : distance + 'px');
       element.style.setProperty('--campus-angle', motion.matches ? '0deg' : window.scrollY * 2.5 + 'deg');
     };
     const schedule = () => {
@@ -46,12 +54,8 @@ export default function CampusProps({ children }) {
   return (
     <div className="campus-frame" ref={frame}>
       <div className="campus-props" aria-hidden="true">
-        {props.map(({ Icon, x, y, size, tilt, speed, gold }, index) => (
-          <span key={x + ':' + y} className={gold ? 'campus-prop campus-prop-gold' : 'campus-prop'}
-            style={{ '--x': x + '%', '--y': y + '%', '--size': size + 'px', '--tilt': tilt + 'deg',
-              '--speed': speed, '--phase': -index * 0.65 + 's' }}>
-            <Icon strokeWidth={1.45} />
-          </span>
+        {props.map((prop, index) => (
+          <CampusProp key={prop.x + ':' + prop.y} {...prop} phase={-index * 0.65} />
         ))}
       </div>
       {children}

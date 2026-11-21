@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import CampusProps from './components/CampusProps';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -29,22 +30,24 @@ function App() {
       <ResetScroll />
       <div className="app-container">
         <Navbar />
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            
-            {/* Feedback uses student aliases and requires sign-in to read or post. */}
-            <Route path="/feedback" element={<Feedback />} />
-            
-            <Route path="/tasks" element={<Tasks />} />
-            {/* Tracking is available to signed-in task participants. */}
-            <Route path="/tracking/:taskId" element={
-              <PrivateRoute><Suspense fallback={<p role="status">Loading live trackingâ€¦</p>}><LiveTracking /></Suspense></PrivateRoute>
-            } />
-          </Routes>
-        </main>
+        <CampusProps>
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+
+              {/* Feedback uses student aliases and requires sign-in to read or post. */}
+              <Route path="/feedback" element={<Feedback />} />
+
+              <Route path="/tasks" element={<Tasks />} />
+              {/* Tracking is available to signed-in task participants. */}
+              <Route path="/tracking/:taskId" element={
+                <PrivateRoute><Suspense fallback={<p role="status">Loading live trackingâ€¦</p>}><LiveTracking /></Suspense></PrivateRoute>
+              } />
+            </Routes>
+          </main>
+        </CampusProps>
       </div>
     </Router>
   );

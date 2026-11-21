@@ -38,6 +38,7 @@ function LiveTracking() {
   const [workerLocation, setWorkerLocation] = useState(null);
   const [isWorker, setIsWorker] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
+  const [trackingError, setTrackingError] = useState("");
   const socketRef = useRef(null);
   const geoWatchRef = useRef(null);
 
@@ -46,20 +47,17 @@ function LiveTracking() {
       try {
         const res = await coreApi.get('/tasks');
         const currentTask = res.data.find(t => t._id === taskId);
-        if (currentTask) {
+        if (currentTask?.worker && [currentTask.requester?._id, currentTask.worker?._id].includes(user?.id)) {
           setTask(currentTask);
           const workerId = currentTask.worker?._id || currentTask.worker;
           const isUserWorker = workerId === user?.id;
           setIsWorker(isUserWorker);
           
-          if (isUserWorker && !isTracking) {
-             startForcedTracking(currentTask);
-          }
         } else {
           navigate('/tasks');
         }
       } catch (err) {
-        console.error('Error fetching task', err);
+        setTrackingError('Unable to load this task.');
       }
     };
     fetchTask();
@@ -69,44 +67,57 @@ function LiveTracking() {
   useEffect(() => {
     if (!task) return;
     
-    socketRef.current = io('http://localhost:5000');
-    socketRef.current.emit('joinTaskRoom', taskId);
-
+    const socket = io({ auth: { token: localStorage.getItem('token') } });
+    socketRef.current = socket;
+    socket.on('connect', () => {
+      socket.emit('joinTaskRoom', taskId, (result) => setTrackingError(result.error || ''));
+    });
+    socket.on('connect_error', () => setTrackingError('Unable to connect to live tracking.'));
     if (!isWorker) {
-      socketRef.current.on('receiveLocation', (loc) => {
-        setWorkerLocation([loc.lat, loc.lng]);
-      });
+      socket.on('receiveLocation', (loc) => setWorkerLocation([loc.lat, loc.lng]));
     }
 
     return () => {
-      if (socketRef.current) socketRef.current.disconnect();
-      if (geoWatchRef.current) navigator.geolocation.clearWatch(geoWatchRef.current);
+      socket.disconnect();
+      socketRef.current = null;
+      if (geoWatchRef.current !== null) navigator.geolocation.clearWatch(geoWatchRef.current);
+      geoWatchRef.current = null;
     };
   }, [task, taskId, isWorker]);
 
-  const startForcedTracking = (currentTask) => {
-      if (navigator.geolocation) {
-        setIsTracking(true);
-        if (currentTask.status === "Open" || currentTask.status === "Accepted") {
-          coreApi.put(`/tasks/${taskId}/status`, { status: "In Progress" });
-        }
-        geoWatchRef.current = navigator.geolocation.watchPosition(
-          (position) => {
-            const newLoc = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            };
-            setWorkerLocation([newLoc.lat, newLoc.lng]);
-            if (socketRef.current) {
-              socketRef.current.emit('sendLocation', { taskId, location: newLoc });
-            }
-          },
-          (err) => console.error(err),
-          { enableHighAccuracy: true, maximumAge: 0 }
-        );
-      } else {
-        alert("Geolocation is not supported by your browser");
-      }
+  const stopSharing = () => {
+    if (geoWatchRef.current !== null) navigator.geolocation.clearWatch(geoWatchRef.current);
+    geoWatchRef.current = null;
+    setIsTracking(false);
+  };
+
+  const startSharing = async () => {
+    const socket = socketRef.current;
+    if (!navigator.geolocation || !socket?.connected) {
+      setTrackingError('Live location requires a connected browser with geolocation enabled.');
+      return;
+    }
+    setTrackingError('');
+    setIsTracking(true);
+    try {
+      if (task.status === 'Accepted') await coreApi.put(`/tasks/${taskId}/status`, { status: 'In Progress' });
+      if (socketRef.current !== socket) return;
+      geoWatchRef.current = navigator.geolocation.watchPosition(
+        ({ coords }) => {
+          const location = { lat: coords.latitude, lng: coords.longitude };
+          setWorkerLocation([location.lat, location.lng]);
+          socketRef.current?.volatile.emit('sendLocation', { taskId, location });
+        },
+        () => {
+          stopSharing();
+          setTrackingError('Location unavailable. Check your browser permissions and try again.');
+        },
+        { enableHighAccuracy: true }
+      );
+    } catch {
+      stopSharing();
+      setTrackingError('Unable to start live tracking.');
+    }
   };
 
   const markCompleted = async () => {
@@ -120,14 +131,14 @@ function LiveTracking() {
     }
   };
 
-  if (!task) return <div className="text-center mt-4" style={{ color: 'var(--text-secondary)' }}>Initializing Live Tracking Module...</div>;
+  if (!task) return <div className="text-center mt-4" style={{ color: 'var(--text-secondary)' }}>{trackingError || "Loading live trackingâ€¦"}</div>;
 
   return (
     <div style={{ padding: '1rem 0' }}>
       <div className="flex-between mb-4" style={{ alignItems: 'flex-start' }}>
         <div>
           <h2 className="text-gradient" style={{ fontSize: '2rem', marginBottom: '0.2rem' }}>Live Tracking Feed</h2>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Task: <strong style={{ color: 'var(--text-primary)' }}>{task.title}</strong> • Path: <strong style={{ color: 'var(--text-primary)' }}>{task.location}</strong></p>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Task: <strong style={{ color: 'var(--text-primary)' }}>{task.title}</strong> â€¢ Path: <strong style={{ color: 'var(--text-primary)' }}>{task.location}</strong></p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
            {!isWorker && task.status !== "Completed" && (
@@ -140,12 +151,18 @@ function LiveTracking() {
       
       <div className="glass-card mb-4" style={{ borderLeft: `4px solid var(--${isWorker ? 'primary' : 'success'})` }}>
         {isWorker ? (
-          <p className="text-sm">You are the <strong>Assigned Worker</strong>. Location tracking is automatically streaming to the requester until completion.</p>
+          <p className="text-sm">You are the <strong>Assigned Worker</strong>. Share your current location with the requester while you work on the task.</p>
         ) : (
-          <p className="text-sm">You are the <strong>Requester</strong>. Awaiting real-time geospatial telemetry from the worker's device.</p>
+          <p className="text-sm">You are the <strong>Requester</strong>. Waiting for the worker to share their location.</p>
         )}
       </div>
 
+      {isWorker && (
+        <button type="button" className="btn mb-2" onClick={isTracking ? stopSharing : startSharing}>
+          {isTracking ? 'Stop sharing' : 'Share live location'}
+        </button>
+      )}
+      {trackingError && <p className="mb-2" role="alert">{trackingError}</p>}
       <div className="map-container" style={{ 
           opacity: workerLocation ? 1 : 0.8,
           transition: 'all 0.5s ease',
@@ -170,7 +187,7 @@ function LiveTracking() {
         ) : (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(5px)' }}>
             <div style={{ width: '40px', height: '40px', border: '3px solid rgba(147, 51, 234, 0.3)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '1rem' }} />
-            <p className="text-secondary">Establishing connection to positioning network...</p>
+            <p className="text-secondary">Waiting for a shared locationâ€¦</p>
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
         )}

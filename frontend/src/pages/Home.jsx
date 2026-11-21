@@ -1,30 +1,71 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { BookOpen, MessageSquare, Moon, Sun } from 'lucide-react';
+import './Home.css';
 
-function Home() {
+export default function Home() {
+  const scene = useRef(null);
+  const [daylight, setDaylight] = useState(false);
+
+  useEffect(() => {
+    const hero = scene.current;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let frame = 0;
+    const paint = () => {
+      frame = 0;
+      const progress = reducedMotion.matches ? 0 : Math.max(0, Math.min(1, -hero.getBoundingClientRect().top / hero.offsetHeight));
+      hero.style.setProperty('--scroll', progress);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(paint);
+    };
+    paint();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    reducedMotion.addEventListener('change', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      reducedMotion.removeEventListener('change', schedule);
+    };
+  }, []);
+
   return (
-    <div style={{ textAlign: 'center', marginTop: '4rem' }}>
-      <h1 className="text-gradient" style={{ fontSize: '3.5rem', marginBottom: '1rem', fontWeight: 700 }}>
-        Welcome to VIT Connect
-      </h1>
-      <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto 3rem', lineHeight: '1.6' }}>
-        The ultimate campus platform for VIT Vellore students. Share anonymous feedback, find help on tasks, and track them live!
-      </p>
-      
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
-        <div className="glass-card" style={{ maxWidth: '350px', textAlign: 'left' }}>
-          <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Anonymous Feedback</h3>
-          <p className="text-sm mb-4" style={{ lineHeight: '1.5' }}>Voice your opinions on mess food, faculties, and campus life safely and anonymously without any fear.</p>
-          <Link to="/feedback" className="btn btn-secondary" style={{ width: '100%' }}>Go to Feedback</Link>
+    <div className="campus-home">
+      <section ref={scene} className={`campus-hero${daylight ? ' campus-day' : ''}`} aria-labelledby="campus-title">
+        <div className="campus-stars" aria-hidden="true" />
+        <div className="campus-orb orb-large" aria-hidden="true" />
+        <div className="campus-clouds clouds-far" aria-hidden="true" />
+        <div className="hero-heading">
+          <p className="campus-kicker">VIT Vellore student portal</p>
+          <h1 id="campus-title">VIT <span>CONNECT</span></h1>
+          <p className="campus-intro">Share feedback. Find help. Stay connected to campus.</p>
         </div>
-        
-        <div className="glass-card" style={{ maxWidth: '350px', textAlign: 'left' }}>
-          <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Task Marketplace</h3>
-          <p className="text-sm mb-4" style={{ lineHeight: '1.5' }}>Need a package from the main gate? Post a task and get a second person to help you out.</p>
-          <Link to="/tasks" className="btn" style={{ width: '100%' }}>Explore Tasks</Link>
+        <div className="campus-orb orb-small" aria-hidden="true" />
+        <div className="campus-clouds clouds-near" aria-hidden="true" />
+        <div className="hero-footer">
+          <a href="#campus-tools">Explore the portal</a>
+          <button type="button" aria-pressed={daylight} onClick={() => setDaylight(!daylight)}>
+            {daylight ? <Sun size={17} /> : <Moon size={17} />} Day mode
+          </button>
         </div>
-      </div>
+      </section>
+      <section className="campus-tools" id="campus-tools" aria-labelledby="campus-tools-title">
+        <h2 id="campus-tools-title">Your campus, connected</h2>
+        <div className="campus-grid">
+          <Link className="campus-tile" to="/feedback">
+            <MessageSquare size={26} aria-hidden="true" />
+            <h3>Campus feedback</h3>
+            <p>Share feedback about classes, facilities, and campus life under your chosen alias.</p>
+          </Link>
+          <Link className="campus-tile" to="/tasks">
+            <BookOpen size={26} aria-hidden="true" />
+            <h3>Student tasks</h3>
+            <p>Ask for help with a campus errand, lend a hand, or track an accepted task.</p>
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
-
-export default Home;

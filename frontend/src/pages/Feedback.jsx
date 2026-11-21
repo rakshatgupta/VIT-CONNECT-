@@ -171,7 +171,7 @@ function Feedback() {
                 <div className="flex-between mb-2">
                   <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{f.authorAlias || 'Anonymous Student'}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    {f.author === user?.id && !f.isDeleted && (
+                    {f.ownedByViewer && !f.isDeleted && (
                       <button onClick={() => handleDeletePost(f._id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex' }} title="Delete Post">
                         <Trash2 size={16} />
                       </button>
@@ -191,9 +191,9 @@ function Feedback() {
                     {f.mediaUrl && (
                       <div style={{ marginBottom: '1.5rem', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
                         {f.mediaUrl.match(/\.(mp4|webm)$/i) ? (
-                          <video src={`http://localhost:5000${f.mediaUrl}`} controls style={{ width: '100%', display: 'block' }} />
+                          <video src={f.mediaUrl} controls style={{ width: '100%', display: 'block' }} />
                         ) : (
-                          <img src={`http://localhost:5000${f.mediaUrl}`} alt="Feedback attachment" style={{ width: '100%', display: 'block', maxHeight: '400px', objectFit: 'cover' }} />
+                          <img src={f.mediaUrl} alt="Feedback attachment" style={{ width: '100%', display: 'block', maxHeight: '400px', objectFit: 'cover' }} />
                         )}
                       </div>
                     )}
@@ -225,7 +225,7 @@ function Feedback() {
                       <div key={i} style={{ marginBottom: '0.8rem', background: 'rgba(0,0,0,0.1)', padding: '0.8rem', borderRadius: 'var(--radius-md)' }}>
                         <div className="flex-between" style={{ marginBottom: '0.3rem' }}>
                           <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600 }}>{c.authorAlias || 'Anonymous Reply'}</span>
-                          {c.user === user?.id && !c.isDeleted && (
+                          {c.ownedByViewer && !c.isDeleted && (
                             <button onClick={() => handleDeleteComment(f._id, c._id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex' }} title="Delete Reply">
                               <Trash2 size={14} />
                             </button>

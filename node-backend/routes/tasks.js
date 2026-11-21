@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
-const User = require('../models/User'); // Used for populating user details
+
 const auth = require('../middleware/auth');
 
 // @route   GET /api/tasks
@@ -24,7 +24,14 @@ router.get('/', auth, async (req, res) => {
       .populate('requester', ['name', 'regNo', 'phone', 'hostelBlock', 'roomNumber'])
       .populate('worker', ['name', 'regNo', 'phone', 'hostelBlock', 'roomNumber'])
       .sort({ createdAt: -1 });
-    res.json(tasks);
+    res.json(tasks.map(task => {
+      const result = task.toObject();
+      if (String(task.requester?._id) !== req.user.id && String(task.worker?._id) !== req.user.id && result.requester) {
+        const { _id } = result.requester;
+        result.requester = { _id };
+      }
+      return result;
+    }));
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -68,15 +75,15 @@ router.put('/:id/accept', auth, async (req, res) => {
     if (task.status !== 'Open') return res.status(400).json({ msg: 'Task is not available' });
     if (task.requester.toString() === req.user.id) return res.status(400).json({ msg: 'Cannot accept own task' });
 
-    task.status = 'Accepted';
-    task.worker = req.user.id;
-    
-    await task.save();
-    
-    task = await Task.findById(task._id)
+    task = await Task.findOneAndUpdate(
+      { _id: task._id, status: 'Open' },
+      { status: 'Accepted', worker: req.user.id },
+      { returnDocument: 'after' }
+    )
       .populate('requester', ['name', 'regNo', 'phone', 'hostelBlock', 'roomNumber'])
       .populate('worker', ['name', 'regNo', 'phone', 'hostelBlock', 'roomNumber']);
-      
+    if (!task) return res.status(409).json({ msg: 'Task is no longer available' });
+
     res.json(task);
   } catch (err) {
     console.error(err.message);
@@ -98,14 +105,15 @@ router.put('/:id/status', auth, async (req, res) => {
     
     if (!task) return res.status(404).json({ msg: 'Task not found' });
     
-    // Only the requester can mark as completed.
-    if (status === 'Completed' && task.requester.toString() !== req.user.id) {
-       return res.status(401).json({ msg: 'Only the user who posted the task can finish it' });
-    }
+    const allowedUser = status === 'Completed' ? task.requester : task.worker;
+    if (String(allowedUser) !== req.user.id) return res.status(403).json({ msg: 'You cannot change this task status' });
+    if (task.status === status) return res.json(task);
+    const from = status === 'Completed' ? ['Accepted', 'In Progress'] : ['Accepted'];
+    task = await Task.findOneAndUpdate(
+      { _id: task._id, status: { $in: from } }, { status }, { returnDocument: 'after' }
+    );
+    if (!task) return res.status(409).json({ msg: 'Task cannot change to that status' });
 
-    task.status = status;
-    await task.save();
-    
     res.json(task);
   } catch (err) {
     console.error(err.message);

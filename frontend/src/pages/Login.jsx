@@ -1,5 +1,6 @@
+import { GraduationCap } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import { authApi } from '../api';
 
@@ -9,6 +10,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuthStore();
   const navigate = useNavigate();
+  const { state } = useLocation();
 
   const decodeJwt = (token) => {
     try {
@@ -31,9 +33,9 @@ function Login() {
       const res = await authApi.post('/login', formData);
       const token = res.data.token;
       const decodedUser = decodeJwt(token)?.user;
-      
+
       login(token, decodedUser);
-      navigate('/tasks');
+      navigate(state?.from === '/feedback' ? '/feedback' : '/tasks', { replace: true });
     } catch (err) {
       setError(err.response?.data || 'Login failed. Check credentials.');
     } finally {
@@ -42,48 +44,52 @@ function Login() {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4rem' }}>
-      <div className="glass-card" style={{ width: '100%', maxWidth: '400px' }}>
-        <h2 className="text-gradient text-center mb-4" style={{ fontSize: '2rem' }}>Welcome Back</h2>
-        
+    <div className="auth-layout">
+      <aside className="auth-side">
+        <GraduationCap size={62} strokeWidth={1.35} aria-hidden="true" />
+        <p>VIT Connect student portal</p>
+      </aside>
+      <section className="glass-card auth-card" aria-labelledby="account-title">
+        <h1 id="account-title">Sign in</h1>
+
         {error && <div style={{ color: 'var(--danger)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="mb-2">
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Registration Number</label>
-            <input 
-              type="text" 
-              name="regNo" 
-              className="input-field" 
-              value={formData.regNo} 
-              onChange={handleChange} 
+            <label htmlFor="regNo" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Registration Number</label>
+            <input id="regNo"
+              type="text"
+              name="regNo"
+              className="input-field"
+              value={formData.regNo}
+              onChange={handleChange}
               placeholder="e.g. 21BCE1234"
-              required 
+              required
             />
           </div>
-          
+
           <div className="mb-4">
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Password</label>
-            <input 
-              type="password" 
-              name="password" 
-              className="input-field" 
-              value={formData.password} 
-              onChange={handleChange} 
+            <label htmlFor="password" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Password</label>
+            <input id="password"
+              type="password"
+              name="password"
+              className="input-field"
+              value={formData.password}
+              onChange={handleChange}
               placeholder="Enter your password"
-              required 
+              required
             />
           </div>
-          
+
           <button type="submit" className="btn" style={{ width: '100%' }} disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        
+
         <p className="text-center mt-4 text-sm">
           Don't have an account? <Link to="/register" style={{ color: 'var(--primary)', fontWeight: '600' }}>Register</Link>
         </p>
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,70 +1,45 @@
-import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, MessageSquare, Moon, Sun } from 'lucide-react';
 import './Home.css';
+import { BookOpen, Check, ClipboardList, GraduationCap, MessageSquare } from 'lucide-react';
 
 export default function Home() {
-  const scene = useRef(null);
-  const [daylight, setDaylight] = useState(false);
-
-  useEffect(() => {
-    const hero = scene.current;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let frame = 0;
-    const paint = () => {
-      frame = 0;
-      const progress = reducedMotion.matches ? 0 : Math.max(0, Math.min(1, -hero.getBoundingClientRect().top / hero.offsetHeight));
-      hero.style.setProperty('--scroll', progress);
-    };
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(paint);
-    };
-    paint();
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
-    reducedMotion.addEventListener('change', schedule);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
-      reducedMotion.removeEventListener('change', schedule);
-    };
-  }, []);
-
   return (
     <div className="campus-home">
-      <section ref={scene} className={`campus-hero${daylight ? ' campus-day' : ''}`} aria-labelledby="campus-title">
-        <div className="campus-stars" aria-hidden="true" />
-        <div className="campus-orb orb-large" aria-hidden="true" />
-        <div className="campus-clouds clouds-far" aria-hidden="true" />
-        <div className="hero-heading">
-          <p className="campus-kicker">VIT Vellore student portal</p>
-          <h1 id="campus-title">VIT <span>CONNECT</span></h1>
-          <p className="campus-intro">Share feedback. Find help. Stay connected to campus.</p>
+      <section className="campus-hero" aria-labelledby="campus-title">
+        <div className="hero-copy">
+          <p className="eyebrow">VIT Vellore student portal</p>
+          <h1 id="campus-title">Campus life,<br /><span>connected.</span></h1>
+          <p>Share feedback about college life, find a hand with campus tasks, or lend one to another student.</p>
+          <div className="button-row">
+            <Link className="btn" to="/feedback">Campus feedback</Link>
+            <Link className="btn btn-secondary" to="/tasks">Browse tasks</Link>
+          </div>
         </div>
-        <div className="campus-orb orb-small" aria-hidden="true" />
-        <div className="campus-clouds clouds-near" aria-hidden="true" />
-        <div className="hero-footer">
-          <a href="#campus-tools">Explore the portal</a>
-          <button type="button" aria-pressed={daylight} onClick={() => setDaylight(!daylight)}>
-            {daylight ? <Sun size={17} /> : <Moon size={17} />} Day mode
-          </button>
+        <div className="campus-art" aria-hidden="true">
+          <div className="art-halo" />
+          <div className="art-bubble"><i /><i /><i /></div>
+          <div className="art-board">
+            <div className="art-clip" />
+            <div className="art-paper">{[0, 1, 2].map(row => <div className="art-row" key={row}><span>{row < 2 && <Check />}</span><i /></div>)}</div>
+          </div>
+          <div className="art-books"><div /><div /><div /></div>
+          <div className="art-cap"><GraduationCap strokeWidth={1.6} /></div>
+          <div className="art-pencil" />
         </div>
       </section>
-      <section className="campus-tools" id="campus-tools" aria-labelledby="campus-tools-title">
-        <h2 id="campus-tools-title">Your campus, connected</h2>
+      <section className="campus-tools" aria-labelledby="campus-tools-title">
+        <div className="section-heading"><h2 id="campus-tools-title">Campus services</h2></div>
         <div className="campus-grid">
           <Link className="campus-tile" to="/feedback">
-            <MessageSquare size={26} aria-hidden="true" />
-            <h3>Campus feedback</h3>
-            <p>Share feedback about classes, facilities, and campus life under your chosen alias.</p>
+            <span className="service-icon"><MessageSquare aria-hidden="true" /></span>
+            <div><h3>Campus feedback</h3><p>Post under your student alias, and discuss classes, facilities, and campus life.</p></div>
           </Link>
           <Link className="campus-tile" to="/tasks">
-            <BookOpen size={26} aria-hidden="true" />
-            <h3>Student tasks</h3>
-            <p>Ask for help with a campus errand, lend a hand, or track an accepted task.</p>
+            <span className="service-icon service-icon-dark"><ClipboardList aria-hidden="true" /></span>
+            <div><h3>Task allotment</h3><p>Post a campus request, accept a task from another student, or track an assignment.</p></div>
           </Link>
         </div>
+        <p className="campus-note"><BookOpen size={18} aria-hidden="true" /> Use your VIT student account to participate.</p>
       </section>
     </div>
   );

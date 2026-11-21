@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import { coreApi } from '../api';
-import { MapPin, Clock, IndianRupee, User as UserIcon, Phone } from 'lucide-react';
+import { MapPin, Clock, IndianRupee, ClipboardList, User as UserIcon, Phone } from 'lucide-react';
 
 function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   
@@ -27,8 +27,8 @@ function Tasks() {
   };
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    if (isAuthenticated) fetchTasks();
+  }, [isAuthenticated]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,20 +65,27 @@ function Tasks() {
   };
 
   return (
-    <div style={{ padding: '1rem 0' }}>
-      <div className="flex-between mb-4" style={{ alignItems: 'flex-start' }}>
+    <div>
+      <header className="portal-heading">
         <div>
-          <h2 className="text-gradient" style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: 700 }}>Task Marketplace</h2>
-          <p className="text-sm">Find tasks, make money, or get things done. transparent identity verified.</p>
+          <h1>Task allotment</h1>
+          <p>Post a campus request or accept an open task from another student.</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="btn">
-          {showForm ? 'Cancel' : 'Post a Task'}
-        </button>
-      </div>
+        {isAuthenticated ? <button onClick={() => setShowForm(!showForm)} className="btn" aria-expanded={showForm}>
+          {showForm ? 'Cancel' : 'Post a task'}
+        </button> : <span className="heading-mark"><ClipboardList aria-hidden="true" /></span>}
+      </header>
 
-      {showForm && (
+      {!isAuthenticated && (
+        <div className="empty-state">
+          <p>Sign in to browse, post, or accept campus tasks.</p>
+          <Link className="btn" to="/login">Sign in</Link>
+        </div>
+      )}
+
+      {isAuthenticated && showForm && (
         <div className="glass-card mb-4">
-          <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>New Task Configuration</h3>
+          <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>New campus task</h3>
           <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div style={{ gridColumn: '1 / -1' }}>
               <input type="text" placeholder="Task Title (e.g., Collect Parcel from Main Gate)" className="input-field" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
@@ -90,20 +97,21 @@ function Tasks() {
               <input type="text" placeholder="Route / Location (e.g. Main Gate -> Q Block)" className="input-field" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} required />
             </div>
             <div>
-              <input type="number" placeholder="Offered Compensation (₹)" className="input-field" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required />
+              <input type="number" placeholder="Offered Compensation (â‚¹)" className="input-field" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required />
             </div>
             <div>
               <input type="text" placeholder="Expected Time (e.g. Before 5:00 PM today)" className="input-field" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} required />
             </div>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <button type="submit" className="btn" style={{ width: '100%' }}>Publish to Marketplace</button>
+              <button type="submit" className="btn" style={{ width: '100%' }}>Publish task</button>
             </div>
           </form>
         </div>
       )}
 
-      {loading ? <p className="text-center mt-4">Loading active tasks...</p> : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '1.5rem' }}>
+      {isAuthenticated && (loading ? <p className="text-center mt-4">Loading active tasks...</p> : (
+        <div className="task-grid">
+          {tasks.length === 0 && <p className="empty-state">No active tasks yet. Post a task to get started.</p>}
           {tasks.map(task => {
             const isMyTask = task.requester._id === user?.id; // Note: user.id from JWT
             const isWorker = task.worker?._id === user?.id;
@@ -138,7 +146,7 @@ function Tasks() {
                 {/* Identity Visibility Logic */}
                 {(isMyTask || isWorker || task.status === 'Accepted' || task.status === 'In Progress') && (
                   <div style={{ marginBottom: '1.5rem' }}>
-                    <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem', marginTop: '1rem' }}>Task Contact Base</h4>
+                    <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem', marginTop: '1rem' }}>Task contacts</h4>
                     <strong style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>Requester:</strong>
                     {renderWorkerDetails(task.requester)}
                     
@@ -165,7 +173,7 @@ function Tasks() {
             );
           })}
         </div>
-      )}
+      ))}
     </div>
   );
 }

@@ -38,12 +38,10 @@ function App() {
             {/* Feedback uses student aliases and requires sign-in to read or post. */}
             <Route path="/feedback" element={<Feedback />} />
             
-            {/* Tasks and tracking are private */}
-            <Route path="/tasks" element={
-              <PrivateRoute><Tasks /></PrivateRoute>
-            } />
+            <Route path="/tasks" element={<Tasks />} />
+            {/* Tracking is available to signed-in task participants. */}
             <Route path="/tracking/:taskId" element={
-              <PrivateRoute><Suspense fallback={<p role="status">Loading live tracking…</p>}><LiveTracking /></Suspense></PrivateRoute>
+              <PrivateRoute><Suspense fallback={<p role="status">Loading live trackingâ€¦</p>}><LiveTracking /></Suspense></PrivateRoute>
             } />
           </Routes>
         </main>

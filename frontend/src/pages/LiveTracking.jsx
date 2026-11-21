@@ -131,23 +131,23 @@ function LiveTracking() {
     }
   };
 
-  if (!task) return <div className="text-center mt-4" style={{ color: 'var(--text-secondary)' }}>{trackingError || "Loading live trackingâ€¦"}</div>;
+  if (!task) return <div className="text-center mt-4" style={{ color: 'var(--text-secondary)' }}>{trackingError || "Loading live trackingÃ¢â‚¬Â¦"}</div>;
 
   return (
     <div style={{ padding: '1rem 0' }}>
-      <div className="flex-between mb-4" style={{ alignItems: 'flex-start' }}>
+      <header className="portal-heading">
         <div>
-          <h2 className="text-gradient" style={{ fontSize: '2rem', marginBottom: '0.2rem' }}>Live Tracking Feed</h2>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Task: <strong style={{ color: 'var(--text-primary)' }}>{task.title}</strong> â€¢ Path: <strong style={{ color: 'var(--text-primary)' }}>{task.location}</strong></p>
+          <h1>Live task tracking</h1>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Task: <strong style={{ color: 'var(--text-primary)' }}>{task.title}</strong> Ã¢â‚¬Â¢ Path: <strong style={{ color: 'var(--text-primary)' }}>{task.location}</strong></p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
            {!isWorker && task.status !== "Completed" && (
              <button onClick={markCompleted} className="btn" style={{ background: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-               <CheckCircle size={18} /> Finish Task (Requester Only)
+               <CheckCircle size={18} /> Complete task
              </button>
            )}
         </div>
-      </div>
+      </header>
       
       <div className="glass-card mb-4" style={{ borderLeft: `4px solid var(--${isWorker ? 'primary' : 'success'})` }}>
         {isWorker ? (
@@ -170,7 +170,6 @@ function LiveTracking() {
           width: '100%',
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
           border: '1px solid var(--glass-border)'
       }}>
         {workerLocation ? (
@@ -185,9 +184,9 @@ function LiveTracking() {
             </Marker>
           </MapContainer>
         ) : (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(5px)' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-hover)' }}>
             <div style={{ width: '40px', height: '40px', border: '3px solid rgba(147, 51, 234, 0.3)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '1rem' }} />
-            <p className="text-secondary">Waiting for a shared locationâ€¦</p>
+            <p className="text-secondary">Waiting for a shared locationÃ¢â‚¬Â¦</p>
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
         )}

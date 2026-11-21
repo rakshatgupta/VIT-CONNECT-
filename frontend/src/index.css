@@ -89,3 +89,9 @@ button { color: inherit; }
   .auth-side { gap: 1rem; }
   .auth-side p { font-size: 2rem; }
 }
+.account-delete { max-width: 36rem; }
+.account-delete h2 { margin-bottom: .65rem; }
+.account-delete p { margin-bottom: 1rem; color: var(--text-secondary); line-height: 1.55; }
+.account-delete .account-error { color: var(--danger); }
+.account-delete .input-field { display: block; margin-top: .4rem; }
+.account-confirm { display: flex; align-items: flex-start; gap: .6rem; margin: .5rem 0 1rem; }

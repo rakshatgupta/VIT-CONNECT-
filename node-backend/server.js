@@ -7,10 +7,13 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
 const Task = require('./models/Task');
+const User = require('./models/User');
+const { prepareUserIndexes } = require('./identity');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+app.set('sockets', io);
 const uploads = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, 'uploads'));
 
 app.use(express.json());
@@ -33,9 +36,10 @@ if (fs.existsSync(path.join(dist, 'index.html'))) {
   app.get('/{*route}', (_req, res) => res.sendFile(path.join(dist, 'index.html')));
 }
 
-io.use((socket, next) => {
+io.use(async (socket, next) => {
   try {
     socket.data.userId = jwt.verify(socket.handshake.auth.token, process.env.JWT_SECRET).user.id;
+    if (!await User.exists({ _id: socket.data.userId })) throw new Error('Account not found');
     next();
   } catch {
     next(new Error('Sign in to track a task'));
@@ -43,6 +47,7 @@ io.use((socket, next) => {
 });
 
 io.on('connection', (socket) => {
+  socket.join(`account:${socket.data.userId}`);
   socket.on('joinTaskRoom', async (taskId, acknowledge) => {
     if (typeof acknowledge !== 'function') return;
     try {
@@ -79,6 +84,7 @@ async function start() {
   }
   fs.mkdirSync(uploads, { recursive: true });
   await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 8000 });
+  await prepareUserIndexes();
   const port = Number(process.env.PORT || 5000);
   server.listen(port, process.env.HOST || '127.0.0.1', () => console.log(`VIT Connect listening on port ${port}`));
 }

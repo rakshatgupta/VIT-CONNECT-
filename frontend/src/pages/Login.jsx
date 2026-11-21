@@ -12,14 +12,6 @@ function Login() {
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  const decodeJwt = (token) => {
-    try {
-      return JSON.parse(atob(token.split('.')[1]));
-    } catch (e) {
-      return null;
-    }
-  };
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -31,10 +23,7 @@ function Login() {
 
     try {
       const res = await authApi.post('/login', formData);
-      const token = res.data.token;
-      const decodedUser = decodeJwt(token)?.user;
-
-      login(token, decodedUser);
+      login(res.data.token, res.data.user);
       navigate(state?.from === '/feedback' ? '/feedback' : '/tasks', { replace: true });
     } catch (err) {
       setError(err.response?.data || 'Login failed. Check credentials.');

@@ -1,18 +1,26 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-module.exports = function(req, res, next) {
-  const authHeader = req.header('Authorization');
-  const token = authHeader && authHeader.split(' ')[1];
+module.exports = async function (req, res, next) {
+  const [scheme, token] = (req.header('Authorization') || '').split(' ');
+  if (scheme !== 'Bearer' || !token) return res.status(401).json({ msg: 'Sign in to continue.' });
 
-  if (!token) {
-    return res.status(401).json({ msg: 'No token, authorization denied' });
+  let user;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    user = decoded.user || decoded;
+    if (!/^[a-f0-9]{24}$/i.test(user.id)) throw new Error('Invalid user');
+  } catch {
+    return res.status(401).json({ msg: 'Your session has expired.' });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded.user || decoded; // Depending on how Java signs the JWT
+    if (!await User.exists({ _id: user.id })) {
+      return res.status(401).json({ msg: 'Your account no longer exists.' });
+    }
+    req.user = user;
     next();
-  } catch (err) {
-    res.status(401).json({ msg: 'Token is not valid' });
+  } catch (error) {
+    next(error);
   }
 };

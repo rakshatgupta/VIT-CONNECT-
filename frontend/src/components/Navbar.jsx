@@ -18,7 +18,7 @@ export default function Navbar() {
         <div className="nav-account">
           {isAuthenticated ? (
             <>
-              <span className="account-id">{user?.regNo}</span>
+              <NavLink to="/account">Account{user?.regNo ? ` (${user.regNo})` : ''}</NavLink>
               <button className="btn btn-secondary" onClick={() => { logout(); navigate('/'); }}>Sign out</button>
             </>
           ) : (

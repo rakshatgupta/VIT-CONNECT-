@@ -5,9 +5,11 @@ import CampusProps from './components/CampusProps';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Account from './pages/Account';
 import Feedback from './pages/Feedback';
 import Tasks from './pages/Tasks';
 import useAuthStore from './store/authStore';
+import { coreApi } from './api';
 
 const LiveTracking = lazy(() => import('./pages/LiveTracking'));
 
@@ -25,6 +27,12 @@ function ResetScroll() {
 }
 
 function App() {
+  useEffect(() => {
+    if (useAuthStore.getState().token) {
+      coreApi.get('/auth/session').catch(() => {});
+    }
+  }, []);
+
   return (
     <Router>
       <ResetScroll />
@@ -36,6 +44,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/account" element={<PrivateRoute><Account /></PrivateRoute>} />
 
               {/* Feedback uses student aliases and requires sign-in to read or post. */}
               <Route path="/feedback" element={<Feedback />} />

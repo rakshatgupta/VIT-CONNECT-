@@ -11,6 +11,9 @@ coreApi.interceptors.request.use((config) => {
 });
 
 coreApi.interceptors.response.use(undefined, (error) => {
-  if (error.response?.status === 401) useAuthStore.getState().logout();
+  const { token, logout } = useAuthStore.getState();
+  if (token && error.response?.status === 401 && error.config?.headers?.Authorization === `Bearer ${token}`) {
+    logout();
+  }
   return Promise.reject(error);
 });

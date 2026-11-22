@@ -95,3 +95,13 @@ button { color: inherit; }
 .account-delete .account-error { color: var(--danger); }
 .account-delete .input-field { display: block; margin-top: .4rem; }
 .account-confirm { display: flex; align-items: flex-start; gap: .6rem; margin: .5rem 0 1rem; }
+
+.feedback-success { display: flex; align-items: center; gap: .55rem; margin-bottom: 1rem; padding: .7rem .85rem; color: var(--success); background: #edf7ef; border: 1px solid currentColor; border-radius: var(--radius-md); font-weight: 600; }
+.feedback-success svg { flex: none; }
+.feedback-comment-form { margin-top: 1rem; }
+.feedback-comment-input { display: flex; gap: .5rem; }
+.feedback-comment-input .input-field { margin-bottom: 0; }
+.feedback-reply-label { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; font-size: .85rem; color: var(--text-secondary); margin-bottom: .4rem; }
+.feedback-reply-action { display: inline-flex; align-items: center; gap: .25rem; border: 0; padding: .3rem 0; background: none; color: var(--primary); cursor: pointer; font-size: .85rem; font-weight: 600; }
+.feedback-reply-action:disabled { cursor: default; opacity: .6; }
+[id^="comment-"]:target { outline: 2px solid var(--primary); }

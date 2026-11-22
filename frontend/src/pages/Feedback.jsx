@@ -1,12 +1,18 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { coreApi } from '../api';
 import useAuthStore from '../store/authStore';
-import { ThumbsUp, ThumbsDown, Image as ImageIcon, MessageSquare, Send, Search, Trash2 } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Image as ImageIcon, MessageSquare, Send, Search, Trash2, CircleCheck, Reply } from 'lucide-react';
 
 function Feedback() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [formData, setFormData] = useState({ text: '', category: 'Campus life' });
+  const attachment = useRef(null);
+  const [postStatus, setPostStatus] = useState('');
+  const [posting, setPosting] = useState(false);
+  const [replyTargets, setReplyTargets] = useState({});
+  const [commentPending, setCommentPending] = useState({});
+  const [commentErrors, setCommentErrors] = useState({});
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,7 +39,9 @@ function Feedback() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.text.trim()) return;
+    if (posting || !formData.text.trim()) return;
+    setPosting(true);
+    setPostStatus('');
 
     const fd = new FormData();
     fd.append('text', formData.text);
@@ -41,13 +49,17 @@ function Feedback() {
     if (file) fd.append('media', file);
 
     try {
-      await coreApi.post('/feedback', fd);
+      const { data } = await coreApi.post('/feedback', fd);
+      setFeedbacks(posts => [data, ...posts.filter(post => post._id !== data._id)]);
+      setPostStatus('Feedback uploaded successfully.');
       setFormData({ ...formData, text: '' });
       setFile(null);
-      fetchFeedbacks();
+      attachment.current.value = '';
     } catch (err) {
       console.error('Failed to post feedback', err);
-      alert('Error: ' + (err.response?.data || 'Failed to post'));
+      alert(typeof err.response?.data === 'string' ? err.response.data : 'Unable to upload feedback.');
+    } finally {
+      setPosting(false);
     }
   };
 
@@ -61,15 +73,20 @@ function Feedback() {
   };
 
   const handlePostComment = async (id) => {
-    const text = commentInputs[id];
-    if (!text || !text.trim()) return;
+    const text = commentInputs[id]?.trim();
+    if (!text || commentPending[id]) return;
+    setCommentPending(current => ({ ...current, [id]: true }));
+    setCommentErrors(current => ({ ...current, [id]: '' }));
 
     try {
-      await coreApi.post(`/feedback/${id}/comment`, { text });
-      setCommentInputs({ ...commentInputs, [id]: '' });
-      fetchFeedbacks();
+      const { data } = await coreApi.post(`/feedback/${id}/comment`, { text, replyTo: replyTargets[id] });
+      setFeedbacks(posts => posts.map(post => post._id === id ? data : post));
+      setCommentInputs(current => ({ ...current, [id]: '' }));
+      setReplyTargets(current => ({ ...current, [id]: undefined }));
     } catch (err) {
-      console.error('Failed to post comment', err);
+      setCommentErrors(current => ({ ...current, [id]: typeof err.response?.data === 'string' ? err.response.data : 'Unable to post your comment.' }));
+    } finally {
+      setCommentPending(current => ({ ...current, [id]: false }));
     }
   };
 
@@ -124,6 +141,7 @@ function Feedback() {
           <section className="glass-card feedback-compose" aria-labelledby="feedback-compose-title">
             <h2 id="feedback-compose-title">Share feedback</h2>
           <form onSubmit={handleSubmit}>
+            <div role="status">{postStatus && <p className="feedback-success"><CircleCheck size={19} aria-hidden="true" /> {postStatus}</p>}</div>
             <textarea
               className="input-field"
               rows="3"
@@ -150,9 +168,9 @@ function Feedback() {
               </div>
               <label className="feedback-attachment">
                 <ImageIcon size={18} aria-hidden="true" /> Attachment (optional)
-                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={(e) => setFile(e.target.files[0])} />
+                <input ref={attachment} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={(e) => setFile(e.target.files[0])} />
               </label>
-              <button type="submit" className="btn">Post feedback</button>
+              <button type="submit" className="btn" disabled={posting}>{posting ? 'Uploading…' : 'Post feedback'}</button>
             </div>
           </form>
           </section>
@@ -178,6 +196,8 @@ function Feedback() {
             filteredFeedbacks.map(f => {
               const hasUpvoted = f.upvotedBy?.includes(user?.id);
               const hasDownvoted = f.downvotedBy?.includes(user?.id);
+              const comments = new Map(f.comments?.map(comment => [comment._id, comment]));
+              const target = comments.get(replyTargets[f._id]);
               const isCommentsExpanded = expandedComments[f._id];
 
               return (
@@ -235,8 +255,8 @@ function Feedback() {
 
                   {isCommentsExpanded && (
                     <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                      {f.comments?.map((c, i) => (
-                        <div key={i} style={{ marginBottom: '0.8rem', background: 'var(--bg-color)', padding: '0.8rem', borderRadius: 'var(--radius-md)' }}>
+                      {f.comments?.map(c => (
+                        <div key={c._id} id={`comment-${c._id}`} style={{ marginBottom: '0.8rem', background: 'var(--bg-color)', padding: '0.8rem', borderRadius: 'var(--radius-md)' }}>
                           <div className="flex-between" style={{ marginBottom: '0.3rem' }}>
                             <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600 }}>{c.authorAlias || 'Anonymous Reply'}</span>
                             {c.ownedByViewer && !c.isDeleted && (
@@ -245,28 +265,44 @@ function Feedback() {
                               </button>
                             )}
                           </div>
+                          {!c.isDeleted && c.replyTo && (
+                            <p className="feedback-reply-label">
+                              <Reply size={14} aria-hidden="true" />
+                              {comments.get(c.replyTo)?.isDeleted ? 'In reply to a deleted comment' : `In reply to ${comments.get(c.replyTo)?.authorAlias || 'an anonymous comment'}`}
+                              <a href={`#comment-${c.replyTo}`}>View comment</a>
+                            </p>
+                          )}
                           {c.isDeleted ? (
                             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', margin: 0, fontStyle: 'italic' }}>[This reply was deleted]</p>
                           ) : (
                             <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', margin: 0 }}>{c.text}</p>
                           )}
+                          {!c.isDeleted && !f.isDeleted && (
+                            <button type="button" className="feedback-reply-action" disabled={commentPending[f._id]} onClick={() => {
+                              setReplyTargets(current => ({ ...current, [f._id]: c._id }));
+                              document.getElementById(`comment-input-${f._id}`)?.focus();
+                            }}><Reply size={14} aria-hidden="true" /> Reply</button>
+                          )}
                         </div>
                       ))}
 
-                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                        <input
-                          type="text"
-                          placeholder="Add an anonymous reply..."
-                          className="input-field"
-                          style={{ marginBottom: 0, padding: '0.6rem 1rem', flex: 1 }}
-                          value={commentInputs[f._id] || ''}
-                          onChange={(e) => setCommentInputs({...commentInputs, [f._id]: e.target.value})}
-                          onKeyPress={(e) => e.key === 'Enter' && handlePostComment(f._id)}
-                        />
-                        <button onClick={() => handlePostComment(f._id)} className="btn" style={{ padding: '0.6rem 1rem' }}>
-                          <Send size={16} />
-                        </button>
-                      </div>
+                      {!f.isDeleted && (
+                        <form className="feedback-comment-form" onSubmit={event => { event.preventDefault(); handlePostComment(f._id); }}>
+                          {target && (
+                            <p className="feedback-reply-label">Replying to {target.authorAlias || 'an anonymous comment'}
+                              <button className="feedback-reply-action" type="button" onClick={() => setReplyTargets(current => ({ ...current, [f._id]: undefined }))}>Cancel reply</button>
+                            </p>
+                          )}
+                          <div className="feedback-comment-input">
+                            <input id={`comment-input-${f._id}`} type="text" required maxLength={2000}
+                              aria-label={target ? 'Your reply' : 'Your comment'} placeholder={target ? 'Write a reply…' : 'Add an anonymous comment…'}
+                              className="input-field" value={commentInputs[f._id] || ''}
+                              onChange={event => setCommentInputs(current => ({ ...current, [f._id]: event.target.value }))} />
+                            <button type="submit" aria-label={target ? 'Send reply' : 'Send comment'} className="btn" disabled={commentPending[f._id]}><Send size={16} aria-hidden="true" /></button>
+                          </div>
+                          {commentErrors[f._id] && <p role="alert">{commentErrors[f._id]}</p>}
+                        </form>
+                      )}
                     </div>
                   )}
                 </div>

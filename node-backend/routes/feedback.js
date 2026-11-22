@@ -127,24 +127,31 @@ module.exports = (uploads) => {
   });
   // @route   POST /api/feedback/:id/comment
   router.post('/:id/comment', auth, async (req, res) => {
+    const { text, replyTo } = req.body || {};
+    if (typeof text !== 'string' || !text.trim() || text.trim().length > 2000) {
+      return res.status(400).json('Enter a comment of up to 2,000 characters.');
+    }
+    const validId = value => typeof value === 'string' && /^[a-f0-9]{24}$/i.test(value);
+    if (!validId(req.params.id) || (replyTo != null && !validId(replyTo))) {
+      return res.status(400).json('Invalid feedback or comment.');
+    }
+
     try {
-      const feedback = await Feedback.findById(req.params.id);
-      if (!feedback) return res.status(404).json('Feedback not found');
-      const userEntry = await User.findById(req.user.id);
-      const alias = userEntry ? userEntry.anonymousAlias : 'Anonymous Reply';
-      const newComment = {
-        text: req.body.text,
-        authorAlias: alias,
-        user: req.user.id
-      };
-      feedback.comments.push(newComment);
-      await feedback.save();
+      const user = await User.findById(req.user.id);
+      const filter = { _id: req.params.id, isDeleted: { $ne: true } };
+      if (replyTo != null) filter.comments = { $elemMatch: { _id: replyTo, isDeleted: { $ne: true } } };
+      const feedback = await Feedback.findOneAndUpdate(filter, {
+        $push: { comments: { text: text.trim(), replyTo, authorAlias: user?.anonymousAlias || 'Anonymous Reply', user: req.user.id } }
+      }, { returnDocument: 'after', runValidators: true });
+
+      if (!feedback) return res.status(404).json('This feedback or comment is no longer available.');
       res.json(forViewer(feedback, req.user.id));
     } catch (err) {
       console.error('Comment Error:', err);
-      res.status(500).json('Server Error');
+      res.status(500).json('Unable to post your comment.');
     }
   });
+
   // @route   PUT /api/feedback/:id/delete
   router.put('/:id/delete', auth, async (req, res) => {
     try {

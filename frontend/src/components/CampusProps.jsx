@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { AlarmClock, Backpack, Bell, Book, BookOpen, GraduationCap, Pencil, Sparkles } from 'lucide-react';
+import { AlarmClock, Backpack, Bell, Book, BookOpen, GraduationCap, Pencil, NotebookPen } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import './CampusProps.css';
 
 const props = [
   { Icon: Backpack, x: 4, y: 9, size: 62, tilt: -16, speed: -0.12 },
-  { Icon: Sparkles, x: 94, y: 13, size: 30, tilt: 12, speed: 0.14, gold: true },
+  { Icon: NotebookPen, x: 94, y: 13, size: 30, tilt: 12, speed: 0.14, gold: true },
   { Icon: GraduationCap, x: 96, y: 29, size: 72, tilt: 15, speed: -0.19 },
   { Icon: Pencil, x: 3, y: 43, size: 42, tilt: -22, speed: 0.16, gold: true },
   { Icon: AlarmClock, x: 96, y: 56, size: 48, tilt: -12, speed: 0.12 },

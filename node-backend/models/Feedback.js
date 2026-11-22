@@ -14,6 +14,7 @@ const FeedbackSchema = new mongoose.Schema({
   comments: [{
     text: { type: String, required: true },
     authorAlias: { type: String, default: 'Anonymous Reply' },
+    replyTo: { type: mongoose.Schema.Types.ObjectId },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }

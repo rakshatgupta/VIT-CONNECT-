@@ -1,17 +1,17 @@
 import { Link } from 'react-router-dom';
 import './Home.css';
-import { AlarmClock, Backpack, Bell, BookOpen, ClipboardList, GraduationCap, MessageSquare, Pencil, Sparkles } from 'lucide-react';
+import { AlarmClock, Backpack, Bell, BookOpen, ClipboardList, GraduationCap, MessageSquare, Pencil, NotebookPen } from 'lucide-react';
 import { CampusProp } from '../components/CampusProps';
 
 const heroProps = [
-  { Icon: Sparkles, x: 15, y: 16, size: 44, tilt: -14, speed: .14, gold: true },
+  { Icon: NotebookPen, x: 15, y: 16, size: 44, tilt: -14, speed: .14, gold: true },
   { Icon: GraduationCap, x: 65, y: 22, size: 181, tilt: 15, speed: -.15 },
   { Icon: Backpack, x: 25, y: 47, size: 154, tilt: -16, speed: .12 },
   { Icon: Pencil, x: 91, y: 48, size: 76, tilt: -15, speed: .20, gold: true },
   { Icon: BookOpen, x: 63, y: 60, size: 187, tilt: -10, speed: -.10, gold: true },
   { Icon: AlarmClock, x: 19, y: 83, size: 72, tilt: 12, speed: -.16 },
   { Icon: Bell, x: 83, y: 82, size: 85, tilt: 20, speed: .16 },
-  { Icon: Sparkles, x: 44, y: 87, size: 32, tilt: 4, speed: -.19, gold: true },
+  { Icon: NotebookPen, x: 44, y: 87, size: 32, tilt: 4, speed: -.19, gold: true },
 ];
 
 export default function Home() {

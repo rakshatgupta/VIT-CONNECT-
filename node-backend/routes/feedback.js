@@ -5,6 +5,7 @@ const { randomUUID } = require('node:crypto');
 const Feedback = require('../models/Feedback');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const media = require('../feedbackMedia');
 
 function forViewer(feedback, userId) {
   const { author, upvotedBy, downvotedBy, comments, ...post } = feedback.toObject();
@@ -53,24 +54,36 @@ module.exports = (uploads) => {
   router.post('/', [auth, upload.single('media')], async (req, res) => {
     const { text, category } = req.body;
 
-    if (!text || !category) {
-      return res.status(400).json('Please provide text and category');
-    }
+    let savedMedia = false;
+    let feedback;
     try {
+      if (typeof text !== 'string' || !text.trim() || !category) {
+        return res.status(400).json('Please provide text and category');
+      }
       const user = await User.findById(req.user.id);
-      const alias = user ? user.anonymousAlias : 'Anonymous Student';
       const newFeedback = new Feedback({
-        text,
+        text: text.trim(),
         category,
-        authorAlias: alias,
+        authorAlias: user?.anonymousAlias || 'Anonymous Student',
         author: req.user.id,
         mediaUrl: req.file ? `/uploads/${req.file.filename}` : null
       });
-      const feedback = await newFeedback.save();
+      await newFeedback.validate();
+      if (req.file) {
+        await media.store(req.file);
+        savedMedia = true;
+      }
+      feedback = await newFeedback.save();
       res.json(forViewer(feedback, req.user.id));
-    } catch (err) {
-      console.error('Feedback Post Error:', err);
-      res.status(500).json(err.message || 'Server Error processing upload');
+    } catch (error) {
+      if (savedMedia && !feedback) await media.remove(req.file.filename).catch(cleanupError => {
+        console.error('Feedback attachment rollback failed:', cleanupError.name);
+      });
+      if (error.name === 'ValidationError') return res.status(400).json('Please provide valid feedback and category.');
+      console.error('Feedback post failed:', error.name);
+      res.status(500).json('Unable to save feedback.');
+    } finally {
+      await media.discardTemporary(req.file);
     }
   });
   // @route   PUT /api/feedback/:id/upvote

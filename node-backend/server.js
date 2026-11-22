@@ -17,6 +17,7 @@ app.set('sockets', io);
 const uploads = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, 'uploads'));
 
 app.use(express.json());
+app.get('/uploads/:filename', require('./feedbackMedia').serve);
 app.use('/uploads', express.static(uploads, {
   index: false,
   setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff')

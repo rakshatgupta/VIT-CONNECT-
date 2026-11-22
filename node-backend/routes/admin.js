@@ -7,6 +7,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const Task = require('../models/Task');
 const Feedback = require('../models/Feedback');
+const media = require('../feedbackMedia');
 
 module.exports = function adminRoutes(uploads) {
   const router = express.Router();
@@ -84,6 +85,7 @@ module.exports = function adminRoutes(uploads) {
       if (kind === 'feedback' && /^\/uploads\/[\w.-]+$/.test(item.mediaUrl || '')) {
         const filename = path.basename(item.mediaUrl);
         if (filename !== '.' && filename !== '..') {
+          await media.remove(filename).catch(error => console.error('Stored attachment cleanup failed:', error.name));
           await fs.unlink(path.join(uploads, filename)).catch(error => {
             if (error.code !== 'ENOENT') console.error('Feedback attachment cleanup failed:', error.code);
           });

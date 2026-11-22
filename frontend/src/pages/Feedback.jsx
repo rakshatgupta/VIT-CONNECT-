@@ -4,6 +4,22 @@ import { coreApi } from '../api';
 import useAuthStore from '../store/authStore';
 import { ThumbsUp, ThumbsDown, Image as ImageIcon, MessageSquare, Send, Search, Trash2, CircleCheck, Reply } from 'lucide-react';
 
+function FeedbackAttachment({ url }) {
+  const [unavailable, setUnavailable] = useState(false);
+  const onError = () => setUnavailable(true);
+  if (unavailable) return <p className="text-sm mb-2">This attachment is unavailable.</p>;
+  return (
+    <div style={{ marginBottom: '1.5rem', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+      {/\.(mp4|webm)$/i.test(url) ? (
+        <video src={url} controls preload="metadata" onError={onError} style={{ width: '100%', display: 'block' }} />
+      ) : (
+        <img src={url} alt="Feedback attachment" loading="lazy" onError={onError}
+          style={{ width: '100%', display: 'block', maxHeight: '28rem', objectFit: 'contain' }} />
+      )}
+    </div>
+  );
+}
+
 function Feedback() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [formData, setFormData] = useState({ text: '', category: 'Campus life' });
@@ -222,15 +238,7 @@ function Feedback() {
                     <>
                       <p style={{ marginBottom: f.mediaUrl ? '1rem' : '1.5rem', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{f.text}</p>
 
-                      {f.mediaUrl && (
-                        <div style={{ marginBottom: '1.5rem', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-                          {f.mediaUrl.match(/\.(mp4|webm)$/i) ? (
-                            <video src={f.mediaUrl} controls style={{ width: '100%', display: 'block' }} />
-                          ) : (
-                            <img src={f.mediaUrl} alt="Feedback attachment" style={{ width: '100%', display: 'block', maxHeight: '400px', objectFit: 'cover' }} />
-                          )}
-                        </div>
-                      )}
+                      {f.mediaUrl && <FeedbackAttachment key={f.mediaUrl} url={f.mediaUrl} />}
                     </>
                   )}
 

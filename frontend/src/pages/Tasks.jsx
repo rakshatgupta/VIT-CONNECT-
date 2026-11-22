@@ -14,6 +14,8 @@ function Tasks() {
   const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '', description: '', location: '', price: '', time: ''
@@ -44,15 +46,33 @@ function Tasks() {
     };
   }, [isAuthenticated]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  function openForm(task) {
+    setEditId(task?._id || null);
+    setFormData(task ? {
+      title: task.title, description: task.description, location: task.location, price: String(task.price), time: task.time
+    } : { title: '', description: '', location: '', price: '', time: '' });
+    setShowForm(true);
+    window.scrollTo(0, 0);
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (saving) return;
+    setSaving(true);
+    setNotice('');
     try {
-      await coreApi.post('/tasks', formData);
-      setFormData({ title: '', description: '', location: '', price: '', time: '' });
+      if (editId) {
+        await coreApi.put(`/tasks/${editId}`, formData);
+      } else {
+        await coreApi.post('/tasks', formData);
+      }
+      setNotice(editId ? 'Task updated.' : 'Task published.');
       setShowForm(false);
-      fetchTasks();
+      await fetchTasks();
     } catch (err) {
-      console.error('Failed to post task', err);
+      setNotice(err.response?.data?.msg || 'Unable to save the task.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -76,7 +96,7 @@ function Tasks() {
           <h1>Task allotment</h1>
           <p>Post a task, review applicants, or request to take an open task.</p>
         </div>
-        {isAuthenticated ? <button onClick={() => setShowForm(!showForm)} className="btn" aria-expanded={showForm}>
+        {isAuthenticated ? <button onClick={() => showForm ? setShowForm(false) : openForm()} className="btn" aria-expanded={showForm}>
           {showForm ? 'Cancel' : 'Post a task'}
         </button> : <span className="heading-mark"><ClipboardList aria-hidden="true" /></span>}
       </header>
@@ -90,7 +110,8 @@ function Tasks() {
 
       {isAuthenticated && showForm && (
         <div className="glass-card mb-4">
-          <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>New campus task</h3>
+          <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>{editId ? 'Edit task' : 'New campus task'}</h3>
+          {editId && <p className="text-sm mb-2">Saving changes clears existing requests so applicants can review the updated task.</p>}
           <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div style={{ gridColumn: '1 / -1' }}>
               <input type="text" placeholder="Task Title (e.g., Collect Parcel from Main Gate)" className="input-field" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
@@ -102,13 +123,13 @@ function Tasks() {
               <input type="text" placeholder="Route / Location (e.g. Main Gate -> Q Block)" className="input-field" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} required />
             </div>
             <div>
-              <input type="number" placeholder="Offered Compensation (₹)" className="input-field" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required />
+              <input type="number" min="0" max="9999999" step="0.01" placeholder="Offered Compensation (₹)" className="input-field" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required />
             </div>
             <div>
               <input type="text" placeholder="Expected Time (e.g. Before 5:00 PM today)" className="input-field" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} required />
             </div>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <button type="submit" className="btn" style={{ width: '100%' }}>Publish task</button>
+              <button type="submit" className="btn" disabled={saving} style={{ width: '100%' }}>{editId ? 'Save changes' : 'Publish task'}</button>
             </div>
           </form>
         </div>
@@ -153,6 +174,7 @@ function Tasks() {
                 </div>
                 
                 <h3 style={{ fontSize: '1.3rem', marginBottom: '0.5rem', marginTop: '0.5rem' }}>{task.title}</h3>
+                <p className="text-sm mb-2">Posted by <strong>{task.requester?.name || 'Former user'}</strong></p>
                 <p className="text-sm" style={{ marginBottom: '1.5rem', flex: 1, lineHeight: 1.5 }}>{task.description}</p>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.5rem', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
@@ -186,6 +208,16 @@ function Tasks() {
                       <button className="btn">Request to take task</button>
                     </form>
                   ))}
+                  {task.status === 'Open' && isMyTask && (
+                    <div className="button-row mb-2">
+                      <button className="btn btn-secondary" onClick={() => openForm(task)}>Edit task</button>
+                      <button className="btn btn-danger" onClick={() => {
+                        if (window.confirm('Permanently delete this task?')) {
+                          taskAction(() => coreApi.delete(`/tasks/${task._id}`), 'Task deleted.');
+                        }
+                      }}>Delete task</button>
+                    </div>
+                  )}
                   {task.status === 'Open' && isMyTask && pending.map(offer => (
                     <div key={offer._id} className="task-controls">
                       <p><strong>{offer.applicant.name}</strong> requests a final amount of ₹{((task.price + offer.extra).toFixed(2))}.</p>

@@ -43,38 +43,46 @@ router.get('/', auth, async (req, res, next) => {
         const user = result[role];
         if (!user) continue;
         if (!assigned) delete user.phone;
-        if (role === 'requester' && task.status === 'Open' && !owns) result.requester = { _id: user._id };
       }
       return result;
     }));
   } catch (error) { next(error); }
 });
 
-// @route   POST /api/tasks
-// @desc    Create a new task
-// @access  Private
-router.post('/', auth, async (req, res) => {
-  const { title, description, location, price, time } = req.body || {};
-  if (!validMoney(price)) return res.status(400).json({ msg: 'Enter a valid offered amount.' });
+function taskDetails(body = {}) {
+  const { title, description, location, price, time } = body || {};
+  const text = { title, description, location, time };
+  if (!validMoney(price) || Object.values(text).some(value => typeof value !== 'string' || !value.trim())) return null;
+  return { ...Object.fromEntries(Object.entries(text).map(([key, value]) => [key, value.trim()])), price: Number(price) };
+}
 
+router.post('/', auth, async (req, res, next) => {
+  const details = taskDetails(req.body);
+  if (!details) return res.status(400).json({ msg: 'Complete all task fields and enter a valid offered amount.' });
   try {
-    const newTask = new Task({
-      title,
-      description,
-      location,
-      price,
-      time,
-      requester: req.user.id
-    });
+    const task = await Task.create({ ...details, requester: req.user.id });
+    await task.populate('requester', 'name');
+    res.json(task);
+  } catch (error) { next(error); }
+});
 
-    const task = await newTask.save();
-    
-    const populatedTask = await Task.findById(task._id).populate('requester', ['name', 'phone']);
-    res.json(populatedTask);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
+router.put('/:id', auth, async (req, res, next) => {
+  const details = taskDetails(req.body);
+  if (!details) return res.status(400).json({ msg: 'Complete all task fields and enter a valid offered amount.' });
+  try {
+    const result = await Task.updateOne({ _id: req.params.id, requester: req.user.id, status: 'Open' },
+      { $set: { ...details, offers: [] } });
+    if (!result.matchedCount) return res.status(409).json({ msg: 'Only the owner can edit an open task.' });
+    res.sendStatus(204);
+  } catch (error) { next(error); }
+});
+
+router.delete('/:id', auth, async (req, res, next) => {
+  try {
+    const result = await Task.deleteOne({ _id: req.params.id, requester: req.user.id, status: 'Open' });
+    if (!result.deletedCount) return res.status(409).json({ msg: 'Only the owner can delete an open task.' });
+    res.sendStatus(204);
+  } catch (error) { next(error); }
 });
 
 function validMoney(value) {

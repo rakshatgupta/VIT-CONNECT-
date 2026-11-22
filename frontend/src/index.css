@@ -117,3 +117,6 @@ button { color: inherit; }
 .task-reviews h2 { margin-bottom: 1rem; }
 .task-stars { margin-block: .5rem; color: #95610a; }
 [aria-pressed="true"].btn { outline: 2px solid var(--primary); outline-offset: 3px; }
+
+.admin-item { display: grid; justify-items: start; gap: .55rem; padding-block: 1rem; border-top: 1px solid var(--glass-border); }
+.admin-item p { overflow-wrap: anywhere; }

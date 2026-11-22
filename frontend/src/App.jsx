@@ -12,6 +12,7 @@ import Tasks from './pages/Tasks';
 import useAuthStore from './store/authStore';
 import { coreApi } from './api';
 
+const Admin = lazy(() => import('./pages/Admin'));
 const LiveTracking = lazy(() => import('./pages/LiveTracking'));
 
 function PrivateRoute({ children }) {
@@ -51,6 +52,7 @@ function App() {
               {/* Feedback uses student aliases and requires sign-in to read or post. */}
               <Route path="/feedback" element={<Feedback />} />
 
+              <Route path="/admin" element={<Suspense fallback={<p role="status">Loading admin tools…</p>}><Admin /></Suspense>} />
               <Route path="/tasks" element={<Tasks />} />
               {/* Tracking is available to signed-in task participants. */}
               <Route path="/tracking/:taskId" element={

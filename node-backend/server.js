@@ -28,6 +28,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/feedback', require('./routes/feedback')(uploads));
 app.use('/api/tasks', require('./routes/tasks'));
+app.use('/api/admin', require('./routes/admin')(uploads));
 app.use(['/api', '/uploads'], (_req, res) => res.status(404).json({ msg: 'Not found' }));
 
 const dist = path.join(__dirname, '../frontend/dist');

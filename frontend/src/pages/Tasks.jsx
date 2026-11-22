@@ -56,7 +56,7 @@ function Tasks() {
     return (
       <div style={{ marginTop: '0.5rem', padding: '1rem', background: 'rgba(147, 51, 234, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(147, 51, 234, 0.2)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><UserIcon size={14} color="var(--primary)" /> {taskUser.name} ({taskUser.regNo})</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><UserIcon size={14} color="var(--primary)" /> {taskUser.name}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><MapPin size={14} color="var(--primary)" /> Block: {taskUser.hostelBlock} - {taskUser.roomNumber}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', gridColumn: '1 / -1' }}><Phone size={14} color="var(--primary)" /> {taskUser.phone}</div>
         </div>

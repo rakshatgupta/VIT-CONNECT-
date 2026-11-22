@@ -5,7 +5,7 @@ import useAuthStore from '../store/authStore';
 import { authApi } from '../api';
 function Register() {
   const [formData, setFormData] = useState({ 
-    name: '', anonymousAlias: '', email: '', regNo: '', phone: '', hostelBlock: '', roomNumber: '', password: '' 
+    name: '', anonymousAlias: '', email: '', phone: '', hostelBlock: '', roomNumber: '', password: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,19 +45,15 @@ function Register() {
         <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div style={{ gridColumn: '1 / -1' }}>
             <label htmlFor="name" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Full Name *</label>
-            <input id="name" type="text" name="name" className="input-field" value={formData.name} onChange={handleChange} required />
+            <input id="name" autoComplete="name" type="text" name="name" className="input-field" value={formData.name} onChange={handleChange} required />
           </div>
           <div style={{ gridColumn: '1 / -1' }}>
             <label htmlFor="anonymousAlias" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Anonymous username *</label>
             <input id="anonymousAlias" type="text" name="anonymousAlias" className="input-field" value={formData.anonymousAlias} onChange={handleChange} placeholder="e.g. shadowstudent_99" minLength={3} maxLength={30} style={{ border: '1px solid var(--secondary)' }} required />
           </div>
           <div style={{ gridColumn: '1 / -1' }}>
-            <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>VIT Email Address *</label>
-            <input id="email" type="email" name="email" className="input-field" value={formData.email} onChange={handleChange} placeholder="name.surname202x@vitstudent.ac.in" pattern={String.raw`[a-zA-Z0-9]+(?:[._\-][a-zA-Z0-9]+)*@[vV][iI][tT][sS][tT][uU][dD][eE][nN][tT]\.[aA][cC]\.[iI][nN]`} required />
-          </div>
-          <div>
-            <label htmlFor="regNo" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Reg. Number *</label>
-            <input id="regNo" type="text" name="regNo" className="input-field" value={formData.regNo} onChange={handleChange} placeholder="e.g. 21BCE0000" required />
+            <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Email address *</label>
+            <input id="email" type="email" name="email" className="input-field" value={formData.email} onChange={handleChange} placeholder="name@example.com" autoComplete="email" required />
           </div>
           <div>
             <label htmlFor="phone" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Phone Number *</label>

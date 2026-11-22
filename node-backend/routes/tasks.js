@@ -21,8 +21,8 @@ router.get('/', auth, async (req, res) => {
         }
       ]
     })
-      .populate('requester', ['name', 'regNo', 'phone', 'hostelBlock', 'roomNumber'])
-      .populate('worker', ['name', 'regNo', 'phone', 'hostelBlock', 'roomNumber'])
+      .populate('requester', ['name', 'phone', 'hostelBlock', 'roomNumber'])
+      .populate('worker', ['name', 'phone', 'hostelBlock', 'roomNumber'])
       .sort({ createdAt: -1 });
     res.json(tasks.map(task => {
       const result = task.toObject();
@@ -56,7 +56,7 @@ router.post('/', auth, async (req, res) => {
 
     const task = await newTask.save();
     
-    const populatedTask = await Task.findById(task._id).populate('requester', ['name', 'regNo', 'phone', 'hostelBlock', 'roomNumber']);
+    const populatedTask = await Task.findById(task._id).populate('requester', ['name', 'phone', 'hostelBlock', 'roomNumber']);
     res.json(populatedTask);
   } catch (err) {
     console.error(err.message);
@@ -80,8 +80,8 @@ router.put('/:id/accept', auth, async (req, res) => {
       { status: 'Accepted', worker: req.user.id },
       { returnDocument: 'after' }
     )
-      .populate('requester', ['name', 'regNo', 'phone', 'hostelBlock', 'roomNumber'])
-      .populate('worker', ['name', 'regNo', 'phone', 'hostelBlock', 'roomNumber']);
+      .populate('requester', ['name', 'phone', 'hostelBlock', 'roomNumber'])
+      .populate('worker', ['name', 'phone', 'hostelBlock', 'roomNumber']);
     if (!task) return res.status(409).json({ msg: 'Task is no longer available' });
 
     res.json(task);

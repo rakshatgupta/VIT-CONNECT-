@@ -133,7 +133,7 @@ function Feedback() {
 
       {!isAuthenticated ? (
         <div className="empty-state">
-          <p>Sign in with your VIT Connect account to read or share feedback.</p>
+          <p>Sign in with your Campus Connect account to read or share feedback.</p>
           <Link className="btn" to="/login" state={{ from: '/feedback' }}>Sign in</Link>
         </div>
       ) : (

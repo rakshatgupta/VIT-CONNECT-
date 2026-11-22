@@ -7,13 +7,13 @@ const auth = require('../middleware/auth');
 const { normalizeIdentity } = require('../identity');
 
 const router = express.Router();
-const fields = ['name', 'anonymousAlias', 'email', 'regNo', 'phone', 'hostelBlock', 'roomNumber', 'password'];
+const fields = ['name', 'anonymousAlias', 'email', 'phone', 'hostelBlock', 'roomNumber', 'password'];
 const uniqueLabels = {
-  email: 'email address', phone: 'phone number', anonymousAlias: 'anonymous username', regNo: 'registration number'
+  email: 'email address', phone: 'phone number', anonymousAlias: 'anonymous username'
 };
 
 function sessionFor(account) {
-  const user = { id: account.id, regNo: account.regNo, email: account.email };
+  const user = { id: account.id, email: account.email };
   const token = jwt.sign({ user }, process.env.JWT_SECRET, { expiresIn: '1d' });
   return { token, user };
 }
@@ -28,8 +28,9 @@ router.post('/register', async (req, res) => {
   }
 
   Object.assign(data, normalizeIdentity(data));
-  if (!/^[a-z0-9]+(?:[._-][a-z0-9]+)*@vitstudent\.ac\.in$/.test(data.email)) {
-    return res.status(400).json('Enter a VIT student email address ending in @vitstudent.ac.in.');
+  if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/.test(data.email) ||
+      data.email.split('@')[0].split('.').some(part => !part) || data.email.indexOf('@') > 64) {
+    return res.status(400).json('Enter a valid email address.');
   }
   if (!/^[6-9]\d{9}$/.test(data.phone)) {
     return res.status(400).json('Enter a valid 10-digit Indian mobile number.');
@@ -53,12 +54,12 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-  const { regNo, password } = req.body || {};
-  if (typeof regNo !== 'string' || typeof password !== 'string') {
-    return res.status(400).json('Enter your registration number and password.');
+  const { email, password } = req.body || {};
+  if (typeof email !== 'string' || typeof password !== 'string') {
+    return res.status(400).json('Enter your email address and password.');
   }
   try {
-    const user = await User.findOne({ regNo: regNo.trim().toUpperCase() });
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
     if (!user || !await bcrypt.compare(password, user.password)) {
       return res.status(400).json('Invalid credentials.');
     }

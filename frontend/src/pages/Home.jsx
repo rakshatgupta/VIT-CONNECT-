@@ -19,7 +19,7 @@ export default function Home() {
     <div className="campus-home">
       <section className="campus-hero" aria-labelledby="campus-title">
         <div className="hero-copy">
-          <p className="eyebrow">VIT Vellore student portal</p>
+          <p className="eyebrow">Student portal</p>
           <h1 id="campus-title">Campus life,<br /><span>connected.</span></h1>
           <p>Share feedback about college life, find a hand with campus tasks, or lend one to another student.</p>
           <div className="button-row">
@@ -45,7 +45,7 @@ export default function Home() {
             <div><h3>Task allotment</h3><p>Post a campus request, accept a task from another student, or track an assignment.</p></div>
           </Link>
         </div>
-        <p className="campus-note"><BookOpen size={18} aria-hidden="true" /> Use your VIT student account to participate.</p>
+        <p className="campus-note"><BookOpen size={18} aria-hidden="true" /> Use your Campus Connect account to participate.</p>
       </section>
     </div>
   );

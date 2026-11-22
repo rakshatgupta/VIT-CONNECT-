@@ -37,7 +37,7 @@ export default function Account() {
       </header>
       <form className="glass-card account-delete" onSubmit={removeAccount}>
         <h2>Delete your account</h2>
-        <p>Deleting your account ends your active tasks and frees your email, phone number, registration number, and username for reuse. Previous feedback and completed tasks remain.</p>
+        <p>Deleting your account ends your active tasks and frees your email, phone number, and username for reuse. Previous feedback and completed tasks remain.</p>
         {error && <p role="alert" className="account-error">{error}</p>}
         <label htmlFor="delete-password">Current password</label>
         <input className="input-field" id="delete-password" type="password" autoComplete="current-password"

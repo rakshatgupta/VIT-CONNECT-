@@ -1,6 +1,6 @@
-# VIT Connect
+# Campus Connect
 
-VIT Vellore student portal for alias-based campus feedback, a student task marketplace, and opt-in live task tracking. The React frontend and Socket.IO API use the same origin. The Java service is legacy and is outside the active app.
+Student portal for alias-based campus feedback, a student task marketplace, and opt-in live task tracking. The React frontend and Socket.IO API use the same origin. The Java service is legacy and is outside the active app.
 
 ## Run locally on Windows
 
@@ -13,7 +13,7 @@ Copy-Item node-backend/.env.example node-backend/.env
 node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"
 ```
 
-Paste the generated value after `JWT_SECRET=` in `node-backend/.env`. Keep that file private. Run `./start-all.bat` from PowerShell and open the Vite URL printed by the frontend, usually http://localhost:5173. The API readiness endpoint is http://127.0.0.1:5000/api/health. Sign up with a VIT student email, an Indian mobile number, and a unique anonymous username. Signup validates the format and checks uniqueness. It does not verify ownership of the email or phone number. To reuse these details, sign in and delete the old account from **Account**.
+Paste the generated value after `JWT_SECRET=` in `node-backend/.env`. Keep that file private. Run `./start-all.bat` from PowerShell and open the Vite URL printed by the frontend, usually http://localhost:5173. The API readiness endpoint is http://127.0.0.1:5000/api/health. Sign up with an email address from any domain, an Indian mobile number, and a unique anonymous username. Signup validates the format and checks uniqueness. It does not verify ownership of the email or phone number. To reuse these details, sign in and delete the old account from **Account**.
 
 To run a production-style build locally:
 
@@ -44,6 +44,6 @@ Open http://127.0.0.1:5000. Stop a running development API first if it already u
    | `UPLOAD_DIR` | `/var/data/uploads` |
 
 6. Attach a persistent disk mounted at `/var/data` so feedback attachments survive redeploys. Render requires a paid service for a persistent disk. Run one instance because Socket.IO rooms are process-local.
-7. Deploy. Open the HTTPS service URL, check `/api/health`, and test registration with a correctly formatted VIT student email. Submit feedback with an attachment and test task tracking from two signed-in browser sessions. The worker must select **Share live location** and grant location permission.
+7. Deploy. Open the HTTPS service URL, check `/api/health`, and test registration with a correctly formatted email address. Submit feedback with an attachment and test task tracking from two signed-in browser sessions. The worker must select **Share live location** and grant location permission.
 
 [Render Web Services](https://render.com/docs/web-services) · [Render persistent disks](https://render.com/docs/disks) · [MongoDB Atlas connection setup](https://www.mongodb.com/docs/atlas/connect-to-database-deployment/)

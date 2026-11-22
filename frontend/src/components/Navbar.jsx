@@ -3,13 +3,13 @@ import { GraduationCap } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
 export default function Navbar() {
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
 
   return (
     <header className="site-header">
       <nav className="navbar" aria-label="Main navigation">
-        <Link className="brand" to="/"><span><GraduationCap size={23} aria-hidden="true" /></span> VIT Connect</Link>
+        <Link className="brand" to="/"><span><GraduationCap size={23} aria-hidden="true" /></span> Campus Connect</Link>
         <div className="nav-links">
           <NavLink to="/" end>Home</NavLink>
           <NavLink to="/feedback">Feedback</NavLink>
@@ -18,7 +18,7 @@ export default function Navbar() {
         <div className="nav-account">
           {isAuthenticated ? (
             <>
-              <NavLink to="/account">Account{user?.regNo ? ` (${user.regNo})` : ''}</NavLink>
+              <NavLink to="/account">Account</NavLink>
               <button className="btn btn-secondary" onClick={() => { logout(); navigate('/'); }}>Sign out</button>
             </>
           ) : (

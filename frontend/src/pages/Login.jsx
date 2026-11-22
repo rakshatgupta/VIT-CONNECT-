@@ -5,7 +5,7 @@ import useAuthStore from '../store/authStore';
 import { authApi } from '../api';
 
 function Login() {
-  const [formData, setFormData] = useState({ regNo: '', password: '' });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuthStore();
@@ -36,7 +36,7 @@ function Login() {
     <div className="auth-layout">
       <aside className="auth-side">
         <GraduationCap size={62} strokeWidth={1.35} aria-hidden="true" />
-        <p>VIT Connect student portal</p>
+        <p>Campus Connect student portal</p>
       </aside>
       <section className="glass-card auth-card" aria-labelledby="account-title">
         <h1 id="account-title">Sign in</h1>
@@ -45,14 +45,15 @@ function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-2">
-            <label htmlFor="regNo" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Registration Number</label>
-            <input id="regNo"
-              type="text"
-              name="regNo"
+            <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Email address</label>
+            <input id="email"
+              type="email"
+              autoComplete="username"
+              name="email"
               className="input-field"
-              value={formData.regNo}
+              value={formData.email}
               onChange={handleChange}
-              placeholder="e.g. 21BCE1234"
+              placeholder="name@example.com"
               required
             />
           </div>

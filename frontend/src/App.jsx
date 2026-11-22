@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import TaskRequests from './components/TaskRequests';
 import CampusProps from './components/CampusProps';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -38,6 +39,7 @@ function App() {
       <ResetScroll />
       <div className="app-container">
         <Navbar />
+        <TaskRequests />
         <CampusProps>
           <main className="main-content">
             <Routes>
@@ -52,7 +54,7 @@ function App() {
               <Route path="/tasks" element={<Tasks />} />
               {/* Tracking is available to signed-in task participants. */}
               <Route path="/tracking/:taskId" element={
-                <PrivateRoute><Suspense fallback={<p role="status">Loading live trackingâ€¦</p>}><LiveTracking /></Suspense></PrivateRoute>
+                <PrivateRoute><Suspense fallback={<p role="status">Loading live tracking…</p>}><LiveTracking /></Suspense></PrivateRoute>
               } />
             </Routes>
           </main>

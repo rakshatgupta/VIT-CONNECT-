@@ -107,3 +107,13 @@ button { color: inherit; }
 [id^="comment-"]:target { outline: 2px solid var(--primary); }
 
 .task-chat { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; padding: .85rem; margin-bottom: 1rem; border: 1px solid var(--glass-border); background: var(--surface-hover); border-radius: var(--radius-md); }
+
+.task-dialog { width: min(30rem, calc(100% - 2rem)); }
+.task-dialog::backdrop { background: #19142199; }
+.task-dialog p, .task-controls { margin-block: .65rem; }
+.task-controls label { display: block; font-weight: 600; }
+.task-controls .input-field, .task-controls textarea, .task-controls select { margin-top: .35rem; display: block; }
+.task-reviews { margin-top: 2rem; }
+.task-reviews h2 { margin-bottom: 1rem; }
+.task-stars { margin-block: .5rem; color: #95610a; }
+[aria-pressed="true"].btn { outline: 2px solid var(--primary); outline-offset: 3px; }

@@ -7,6 +7,9 @@ import { MapPin, Clock, IndianRupee, ClipboardList } from 'lucide-react';
 
 function Tasks() {
   const [tasks, setTasks] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [completed, setCompleted] = useState(false);
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(true);
   const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
@@ -27,8 +30,18 @@ function Tasks() {
     }
   };
 
+  const fetchReviews = () => coreApi.get('/tasks/reviews').then(({ data }) => setReviews(data)).catch(console.error);
+  useEffect(() => { fetchReviews(); }, []);
+
   useEffect(() => {
-    if (isAuthenticated) fetchTasks();
+    if (!isAuthenticated) return;
+    fetchTasks();
+    const timer = setInterval(fetchTasks, 8000);
+    window.addEventListener('campus-tasks-changed', fetchTasks);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('campus-tasks-changed', fetchTasks);
+    };
   }, [isAuthenticated]);
 
   const handleSubmit = async (e) => {
@@ -43,21 +56,25 @@ function Tasks() {
     }
   };
 
-  const handleAcceptTask = async (taskId) => {
+  async function taskAction(action, success) {
+    setNotice('');
     try {
-      await coreApi.put(`/tasks/${taskId}/accept`);
-      fetchTasks();
+      await action();
+      setNotice(success);
+      await fetchTasks();
     } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to accept task');
+      setNotice(err.response?.data?.msg || 'Could not save your changes.');
     }
-  };
+  }
+
+  const visibleTasks = tasks.filter(task => completed === (task.status === 'Completed'));
 
   return (
     <div>
       <header className="portal-heading">
         <div>
           <h1>Task allotment</h1>
-          <p>Post a campus request or accept an open task from another student.</p>
+          <p>Post a task, review applicants, or request to take an open task.</p>
         </div>
         {isAuthenticated ? <button onClick={() => setShowForm(!showForm)} className="btn" aria-expanded={showForm}>
           {showForm ? 'Cancel' : 'Post a task'}
@@ -85,7 +102,7 @@ function Tasks() {
               <input type="text" placeholder="Route / Location (e.g. Main Gate -> Q Block)" className="input-field" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} required />
             </div>
             <div>
-              <input type="number" placeholder="Offered Compensation (Ã¢â€šÂ¹)" className="input-field" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required />
+              <input type="number" placeholder="Offered Compensation (₹)" className="input-field" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required />
             </div>
             <div>
               <input type="text" placeholder="Expected Time (e.g. Before 5:00 PM today)" className="input-field" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} required />
@@ -97,12 +114,22 @@ function Tasks() {
         </div>
       )}
 
+      {isAuthenticated && (
+        <div className="button-row mb-2">
+          <button className="btn btn-secondary" aria-pressed={!completed} onClick={() => setCompleted(false)}>Active tasks</button>
+          <button className="btn btn-secondary" aria-pressed={completed} onClick={() => setCompleted(true)}>Completed tasks</button>
+          <a href="#worker-reviews">Worker reviews</a>
+        </div>
+      )}
+      {notice && <p role="status" className="mb-2">{notice}</p>}
+
       {isAuthenticated && (loading ? <p className="text-center mt-4">Loading active tasks...</p> : (
         <div className="task-grid">
-          {tasks.length === 0 && <p className="empty-state">No active tasks yet. Post a task to get started.</p>}
-          {tasks.map(task => {
+          {visibleTasks.length === 0 && <p className="empty-state">{completed ? 'No completed tasks yet.' : 'No active tasks yet.'}</p>}
+          {visibleTasks.map(task => {
             const isMyTask = task.requester?._id === user?.id;
             const isWorker = task.worker?._id === user?.id;
+            const pending = task.offers?.filter(offer => offer.status === 'Pending') || [];
             const assigned = task.status === 'Accepted' || task.status === 'In Progress';
             const contact = assigned && (isMyTask ? task.worker : isWorker ? task.requester : null);
             
@@ -144,9 +171,60 @@ function Tasks() {
                 )}
 
                 <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)' }}>
-                  {task.status === 'Open' && !isMyTask && (
-                    <button onClick={() => handleAcceptTask(task._id)} className="btn" style={{ width: '100%', padding: '1rem' }}>Accept & Proceed</button>
+                  {task.status === 'Open' && !isMyTask && (pending.length ? (
+                    <p role="status">Request pending owner approval.</p>
+                  ) : (
+                    <form className="task-controls" onSubmit={event => {
+                      event.preventDefault();
+                      const extra = new FormData(event.currentTarget).get('extra') || '0';
+                      taskAction(() => coreApi.put(`/tasks/${task._id}/accept`, { extra }), 'Request sent to the task owner.');
+                    }}>
+                      {task.offers?.some(offer => offer.status === 'Declined') && <p>Your earlier request was declined.</p>}
+                      <label>Additional pay requested (₹)
+                        <input className="input-field" name="extra" type="number" min="0" max="9999999" step="0.01" defaultValue="0" />
+                      </label>
+                      <button className="btn">Request to take task</button>
+                    </form>
+                  ))}
+                  {task.status === 'Open' && isMyTask && pending.map(offer => (
+                    <div key={offer._id} className="task-controls">
+                      <p><strong>{offer.applicant.name}</strong> requests a final amount of ₹{((task.price + offer.extra).toFixed(2))}.</p>
+                      <div className="button-row">
+                        <button className="btn" onClick={() => taskAction(() => coreApi.put(`/tasks/${task._id}/offers/${offer._id}`, { approve: true }), 'Task assigned.')}>Approve</button>
+                        <button className="btn btn-secondary" onClick={() => taskAction(() => coreApi.put(`/tasks/${task._id}/offers/${offer._id}`, { approve: false }), 'Request declined.')}>Decline</button>
+                      </div>
+                    </div>
+                  ))}
+                  {completed && task.worker && <p className="text-sm">Completed by {task.worker.name}</p>}
+                  {completed && task.review?.stars && <p>Review: {task.review.stars}/5 stars {task.review.comment && `· ${task.review.comment}`}</p>}
+                  {completed && isMyTask && task.worker && !task.review?.stars && (
+                    <form className="task-controls" onSubmit={event => {
+                      event.preventDefault();
+                      const values = new FormData(event.currentTarget);
+                      taskAction(async () => {
+                        await coreApi.post(`/tasks/${task._id}/review`, { stars: Number(values.get('stars')), comment: values.get('comment') });
+                        await fetchReviews();
+                      }, 'Review published.');
+                    }}>
+                      <label>Rating
+                        <select className="select-field" name="stars" required defaultValue="">
+                          <option value="" disabled>Choose a rating</option>
+                          {[5, 4, 3, 2, 1].map(stars => <option key={stars} value={stars}>{stars} / 5 stars</option>)}
+                        </select>
+                      </label>
+                      <label>Short public comment
+                        <textarea name="comment" maxLength={280} rows={2} placeholder="Optional" />
+                      </label>
+                      <button className="btn">Publish review</button>
+                    </form>
                   )}
+                  {assigned && isMyTask && <button className="btn mb-2" onClick={async () => {
+                    if (!window.confirm('Mark this task completed?')) return;
+                    await taskAction(async () => {
+                      await coreApi.put(`/tasks/${task._id}/status`, { status: 'Completed' });
+                      setCompleted(true);
+                    }, 'Task moved to Completed tasks.');
+                  }}>Mark completed</button>}
                   {assigned && (isMyTask || isWorker) && (
                     <button onClick={() => navigate(`/tracking/${task._id}`)} className="btn btn-secondary" style={{ width: '100%', padding: '1rem', background: 'var(--primary)', color: 'white' }}>
                       <MapPin size={18} style={{ marginRight: '0.5rem' }} /> Access Live Tracking Control
@@ -158,6 +236,17 @@ function Tasks() {
           })}
         </div>
       ))}
+      <section id="worker-reviews" className="task-reviews" aria-labelledby="worker-reviews-title">
+        <h2 id="worker-reviews-title">Worker reviews</h2>
+        {reviews.length === 0 && <p className="text-sm">No worker reviews yet.</p>}
+        <div className="task-grid">
+          {reviews.map(review => <article className="glass-card" key={review.id}>
+            <h3>{review.worker}</h3>
+            <p aria-label={`${review.stars} out of 5 stars`} className="task-stars">{'★'.repeat(review.stars)}{'☆'.repeat(5 - review.stars)} <span>{review.stars}/5</span></p>
+            {review.comment && <p>{review.comment}</p>}
+          </article>)}
+        </div>
+      </section>
     </div>
   );
 }

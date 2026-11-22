@@ -13,6 +13,17 @@ const TaskSchema = new mongoose.Schema({
   },
   requester: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   worker: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  offers: [{
+    applicant: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    extra: { type: Number, required: true },
+    status: { type: String, enum: ['Pending', 'Declined'], default: 'Pending' }
+  }],
+  review: {
+    stars: Number,
+    comment: String,
+    createdAt: Date
+  },
+  completedAt: Date,
   createdAt: { type: Date, default: Date.now }
 });
 

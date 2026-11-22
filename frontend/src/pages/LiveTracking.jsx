@@ -48,7 +48,7 @@ function LiveTracking() {
       try {
         const res = await coreApi.get('/tasks');
         const currentTask = res.data.find(t => t._id === taskId);
-        if (currentTask?.worker && [currentTask.requester?._id, currentTask.worker?._id].includes(user?.id)) {
+        if (currentTask?.worker && ['Accepted', 'In Progress'].includes(currentTask.status) && [currentTask.requester?._id, currentTask.worker?._id].includes(user?.id)) {
           setTask(currentTask);
           const workerId = currentTask.worker?._id || currentTask.worker;
           const isUserWorker = workerId === user?.id;
@@ -132,14 +132,14 @@ function LiveTracking() {
     }
   };
 
-  if (!task) return <div className="text-center mt-4" style={{ color: 'var(--text-secondary)' }}>{trackingError || "Loading live trackingÃ¢â‚¬Â¦"}</div>;
+  if (!task) return <div className="text-center mt-4" style={{ color: 'var(--text-secondary)' }}>{trackingError || "Loading live tracking…"}</div>;
 
   return (
     <div style={{ padding: '1rem 0' }}>
       <header className="portal-heading">
         <div>
           <h1>Live task tracking</h1>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Task: <strong style={{ color: 'var(--text-primary)' }}>{task.title}</strong> Ã¢â‚¬Â¢ Path: <strong style={{ color: 'var(--text-primary)' }}>{task.location}</strong></p>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Task: <strong style={{ color: 'var(--text-primary)' }}>{task.title}</strong> · Path: <strong style={{ color: 'var(--text-primary)' }}>{task.location}</strong></p>
         </div>
         <div className="button-row">
            <TaskWhatsApp contact={isWorker ? task.requester : task.worker} />
@@ -188,7 +188,7 @@ function LiveTracking() {
         ) : (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-hover)' }}>
             <div style={{ width: '40px', height: '40px', border: '3px solid rgba(147, 51, 234, 0.3)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '1rem' }} />
-            <p className="text-secondary">Waiting for a shared locationÃ¢â‚¬Â¦</p>
+            <p className="text-secondary">Waiting for a shared location…</p>
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
         )}

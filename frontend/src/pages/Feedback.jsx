@@ -191,7 +191,7 @@ function Feedback() {
 
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {loading ? <p className="text-center">Loading feedbackÃ¢â‚¬Â¦</p> :
+          {loading ? <p className="text-center">Loading feedback…</p> :
             filteredFeedbacks.length === 0 ? <p className="text-center" style={{ color: 'var(--text-secondary)' }}>No feedback found.</p> :
             filteredFeedbacks.map(f => {
               const hasUpvoted = f.upvotedBy?.includes(user?.id);

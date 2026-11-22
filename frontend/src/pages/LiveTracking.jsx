@@ -1,3 +1,4 @@
+import TaskWhatsApp from '../components/TaskWhatsApp';
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
@@ -140,7 +141,8 @@ function LiveTracking() {
           <h1>Live task tracking</h1>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Task: <strong style={{ color: 'var(--text-primary)' }}>{task.title}</strong> Ã¢â‚¬Â¢ Path: <strong style={{ color: 'var(--text-primary)' }}>{task.location}</strong></p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div className="button-row">
+           <TaskWhatsApp contact={isWorker ? task.requester : task.worker} />
            {!isWorker && task.status !== "Completed" && (
              <button onClick={markCompleted} className="btn" style={{ background: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                <CheckCircle size={18} /> Complete task

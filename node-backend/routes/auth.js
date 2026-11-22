@@ -7,7 +7,7 @@ const auth = require('../middleware/auth');
 const { normalizeIdentity } = require('../identity');
 
 const router = express.Router();
-const fields = ['name', 'anonymousAlias', 'email', 'phone', 'hostelBlock', 'roomNumber', 'password'];
+const fields = ['name', 'anonymousAlias', 'email', 'phone', 'password'];
 const uniqueLabels = {
   email: 'email address', phone: 'phone number', anonymousAlias: 'anonymous username'
 };

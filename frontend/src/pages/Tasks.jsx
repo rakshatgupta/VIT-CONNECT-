@@ -1,8 +1,9 @@
+import TaskWhatsApp from '../components/TaskWhatsApp';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import { coreApi } from '../api';
-import { MapPin, Clock, IndianRupee, ClipboardList, User as UserIcon, Phone } from 'lucide-react';
+import { MapPin, Clock, IndianRupee, ClipboardList } from 'lucide-react';
 
 function Tasks() {
   const [tasks, setTasks] = useState([]);
@@ -51,19 +52,6 @@ function Tasks() {
     }
   };
 
-  const renderWorkerDetails = (taskUser) => {
-    if (!taskUser) return null;
-    return (
-      <div style={{ marginTop: '0.5rem', padding: '1rem', background: 'rgba(147, 51, 234, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(147, 51, 234, 0.2)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><UserIcon size={14} color="var(--primary)" /> {taskUser.name}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><MapPin size={14} color="var(--primary)" /> Block: {taskUser.hostelBlock} - {taskUser.roomNumber}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', gridColumn: '1 / -1' }}><Phone size={14} color="var(--primary)" /> {taskUser.phone}</div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div>
       <header className="portal-heading">
@@ -97,7 +85,7 @@ function Tasks() {
               <input type="text" placeholder="Route / Location (e.g. Main Gate -> Q Block)" className="input-field" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} required />
             </div>
             <div>
-              <input type="number" placeholder="Offered Compensation (â‚¹)" className="input-field" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required />
+              <input type="number" placeholder="Offered Compensation (Ã¢â€šÂ¹)" className="input-field" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required />
             </div>
             <div>
               <input type="text" placeholder="Expected Time (e.g. Before 5:00 PM today)" className="input-field" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} required />
@@ -113,8 +101,10 @@ function Tasks() {
         <div className="task-grid">
           {tasks.length === 0 && <p className="empty-state">No active tasks yet. Post a task to get started.</p>}
           {tasks.map(task => {
-            const isMyTask = task.requester._id === user?.id; // Note: user.id from JWT
+            const isMyTask = task.requester?._id === user?.id;
             const isWorker = task.worker?._id === user?.id;
+            const assigned = task.status === 'Accepted' || task.status === 'In Progress';
+            const contact = assigned && (isMyTask ? task.worker : isWorker ? task.requester : null);
             
             return (
               <div key={task._id} className="glass-card" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -143,19 +133,13 @@ function Tasks() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Clock size={16} /> {task.time}</div>
                 </div>
 
-                {/* Identity Visibility Logic */}
-                {(isMyTask || isWorker || task.status === 'Accepted' || task.status === 'In Progress') && (
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem', marginTop: '1rem' }}>Task contacts</h4>
-                    <strong style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>Requester:</strong>
-                    {renderWorkerDetails(task.requester)}
-                    
-                    {task.worker && (
-                      <div style={{ marginTop: '1rem' }}>
-                        <strong style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>Assigned Worker:</strong>
-                        {renderWorkerDetails(task.worker)}
-                      </div>
-                    )}
+                {contact && (
+                  <div className="task-chat">
+                    <div>
+                      <p className="text-sm">{isMyTask ? 'Assigned worker' : 'Requester'}</p>
+                      <strong>{contact.name}</strong>
+                    </div>
+                    <TaskWhatsApp contact={contact} />
                   </div>
                 )}
 
@@ -163,7 +147,7 @@ function Tasks() {
                   {task.status === 'Open' && !isMyTask && (
                     <button onClick={() => handleAcceptTask(task._id)} className="btn" style={{ width: '100%', padding: '1rem' }}>Accept & Proceed</button>
                   )}
-                  {(task.status === 'Accepted' || task.status === 'In Progress') && (isMyTask || isWorker) && (
+                  {assigned && (isMyTask || isWorker) && (
                     <button onClick={() => navigate(`/tracking/${task._id}`)} className="btn btn-secondary" style={{ width: '100%', padding: '1rem', background: 'var(--primary)', color: 'white' }}>
                       <MapPin size={18} style={{ marginRight: '0.5rem' }} /> Access Live Tracking Control
                     </button>

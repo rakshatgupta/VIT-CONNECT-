@@ -105,3 +105,5 @@ button { color: inherit; }
 .feedback-reply-action { display: inline-flex; align-items: center; gap: .25rem; border: 0; padding: .3rem 0; background: none; color: var(--primary); cursor: pointer; font-size: .85rem; font-weight: 600; }
 .feedback-reply-action:disabled { cursor: default; opacity: .6; }
 [id^="comment-"]:target { outline: 2px solid var(--primary); }
+
+.task-chat { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; padding: .85rem; margin-bottom: 1rem; border: 1px solid var(--glass-border); background: var(--surface-hover); border-radius: var(--radius-md); }

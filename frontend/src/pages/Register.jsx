@@ -5,7 +5,7 @@ import useAuthStore from '../store/authStore';
 import { authApi } from '../api';
 function Register() {
   const [formData, setFormData] = useState({ 
-    name: '', anonymousAlias: '', email: '', phone: '', hostelBlock: '', roomNumber: '', password: ''
+    name: '', anonymousAlias: '', email: '', phone: '', password: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,17 +55,10 @@ function Register() {
             <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Email address *</label>
             <input id="email" type="email" name="email" className="input-field" value={formData.email} onChange={handleChange} placeholder="name@example.com" autoComplete="email" required />
           </div>
-          <div>
+          <div style={{ gridColumn: '1 / -1' }}>
             <label htmlFor="phone" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Phone Number *</label>
-            <input id="phone" type="tel" name="phone" className="input-field" value={formData.phone} onChange={handleChange} placeholder="10-digit Indian mobile number" autoComplete="tel" required />
-          </div>
-          <div>
-            <label htmlFor="hostelBlock" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Hostel Block *</label>
-            <input id="hostelBlock" type="text" name="hostelBlock" className="input-field" value={formData.hostelBlock} onChange={handleChange} placeholder="e.g. Q Block" required />
-          </div>
-          <div>
-            <label htmlFor="roomNumber" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Room Number *</label>
-            <input id="roomNumber" type="text" name="roomNumber" className="input-field" value={formData.roomNumber} onChange={handleChange} placeholder="e.g. 401" required />
+            <input id="phone" type="tel" name="phone" className="input-field" value={formData.phone} onChange={handleChange} placeholder="10-digit Indian mobile number" autoComplete="tel" aria-describedby="phone-help" required />
+            <p id="phone-help" className="text-sm">Use your WhatsApp number to coordinate accepted tasks.</p>
           </div>
           <div style={{ gridColumn: '1 / -1' }}>
             <label htmlFor="password" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Password *</label>
